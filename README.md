@@ -1,11 +1,16 @@
-# Git Studio（Git 工作台）
+# Git Workbench（Git工作台）
+*原名Gitea Studio（Gitea 工作台）*
+
+>[!INFO]
+>此readme为Gitea工作台readme
 
 > [!CAUTION]
-> 由于某些原因，将不在此仓库更新，需要最新版的请移步[Gitea仓库](https://gitea.com/ZymJason_DSH/gitea-studio)带来的不便，敬请谅解！
+> 由于某些原因，可能会使本仓库存档/只读（视情况而定），需要最新版的强烈建议移步[Gitea仓库](https://gitea.com/ZymJason_DSH/git-workbench)
+> 带来的不便，敬请谅解！
 
 
 > [!WARNING]
-> 目前仅适配Gitea平台
+> 目前版本仅适配Gitea平台（后续已支持主流Git平台）
 
 绑定一个 Gitea 账号，在 DeepSeek Harness Web GUI 中可视化管理它，并让对话直接驱动 Git 迭代。
 
