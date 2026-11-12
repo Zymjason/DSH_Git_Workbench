@@ -5,7 +5,7 @@
 >此readme为Gitea工作台readme
 
 > [!CAUTION]
-> 由于某些原因，可能会使本仓库存档/只读（视情况而定），需要最新版的强烈建议移步[Gitea仓库](https://gitea.com/ZymJason_DSH/git-workbench)
+> 由于某些原因，建议移步[Gitea仓库](https://gitea.com/ZymJason_DSH/git-workbench)
 > 带来的不便，敬请谅解！
 
 
