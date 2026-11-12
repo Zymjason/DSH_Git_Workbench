@@ -1,5 +1,8 @@
 # Gitea Studio（Gitea 工作台）
 
+> [!CAUTION]
+> 由于某些原因，最新版不会第一时间同步到Github中，需要最新版的请移步[Gitea仓库](https://gitea.com/ZymJason_DSH/gitea-studio)带来的不便，敬请谅解！
+
 绑定一个 Gitea 账号，在 DeepSeek Harness Web GUI 中可视化管理它，并让对话直接驱动 Git 迭代。
 
 ## 功能
@@ -22,3 +25,4 @@
 - `index.js` — Host 半：Gitea REST 客户端、git 子进程、认证 RPC 路由（`/api/gitea-studio/rpc`）、`gitea` 工具、系统提示节。
 - `client.js` — Client 半：设置页、侧栏图标、主面板（仓库/分支图/PR/文件）、加号菜单命令、`@` 引用源、会话关联 chip。
 - `cordis.patch.yml` — 插入一个 Host 行；行 config 仅为首次启动默认值。
+
