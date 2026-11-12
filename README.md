@@ -3,6 +3,9 @@
 > [!CAUTION]
 > 由于某些原因，最新版不会第一时间同步到Github中，需要最新版的请移步[Gitea仓库](https://gitea.com/ZymJason_DSH/gitea-studio)带来的不便，敬请谅解！
 
+> [!WARNING]
+> 目前仅适配Gitea平台
+
 绑定一个 Gitea 账号，在 DeepSeek Harness Web GUI 中可视化管理它，并让对话直接驱动 Git 迭代。
 
 ## 功能
