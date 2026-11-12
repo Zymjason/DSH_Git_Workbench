@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Gitea Studio",
+    "description": "Bind a Gitea account and manage it visually: repositories, branch graphs, Pull Request review, one-call project pushes from chat, and repo-bound sessions for automatic Git iteration."
+  }
+}

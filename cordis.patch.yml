@@ -1,0 +1,11 @@
+# Gitea Studio bundle: one Host row. The row config supplies first-start
+# defaults; the plugin's own settings page persists later edits beside the
+# profile (data/gitea-studio/state.json) and takes precedence over these values.
+- insert:
+    - id: gitea-studio
+      name: '@local/gitea-studio'
+      config:
+        baseUrl: ''
+        username: ''
+        token: ''
+        cloneRoot: ''
