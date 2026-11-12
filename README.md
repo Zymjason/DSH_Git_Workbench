@@ -1,4 +1,4 @@
-# Gitea Studio（Gitea 工作台）
+# Git Studio（Git 工作台）
 
 > [!CAUTION]
 > 由于某些原因，最新版不会第一时间同步到Github中，需要最新版的请移步[Gitea仓库](https://gitea.com/ZymJason_DSH/gitea-studio)带来的不便，敬请谅解！
@@ -29,3 +29,6 @@
 - `client.js` — Client 半：设置页、侧栏图标、主面板（仓库/分支图/PR/文件）、加号菜单命令、`@` 引用源、会话关联 chip。
 - `cordis.patch.yml` — 插入一个 Host 行；行 config 仅为首次启动默认值。
 
+## 未来计划(详情请移步Gitea平台)
+适配其他Git平台
+优化和增加功能
