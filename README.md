@@ -83,3 +83,7 @@ NODE_ENV=test node /tmp/gs-react-test/render.mjs   # 客户端渲染测试
 - 令牌仅存于 0600 权限的状态文件与内存；UI 与工具输出不回显令牌。
 - 删除仓库 / 删除分支 / 删除账号等破坏性操作在 UI 中均需二次确认。
 - 公开仓库不包含任何凭据。
+
+
+## 声明
+本项目使用Deepdeek Harness生成
