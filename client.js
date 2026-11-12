@@ -1,12 +1,12 @@
 /**
- * Gitea Studio — browser half.
+ * Git 工作台 (Git Workbench) — browser half.
  *
  * Registers one Settings section (account binding), one sidebar panel icon,
  * and the main studio page: repositories, branch commit graph, Pull Request
  * review (diff + comments + merge), and file browsing. Also integrates repo
  * linking into the composer: a + menu command, an @ reference source, and a
  * per-session link chip. All data flows through the authenticated Host RPC
- * route; every operation shares its implementation with the `gitea` agent tool.
+ * route; every operation shares its implementation with the `git` agent tool.
  */
 window.__ModuleLoader__.load({
   id: '@local/gitea-studio',
@@ -22,19 +22,22 @@ window.__ModuleLoader__.load({
       loading: '加载中…', refresh: '刷新', retry: '重试', error: '出错了', save: '保存', cancel: '取消',
       confirm: '确认', delete: '删除', create: '创建', back: '返回', close: '关闭', copy: '复制',
       copied: '已复制', copyFailed: '复制失败', empty: '暂无数据', search: '搜索', busy: '处理中…',
-      settingsTitle: 'Gitea 工作台',
-      settingsDesc: '绑定 Gitea 账号后，可在左侧栏工作台管理仓库、分支与 Pull Request，并让对话直接推送项目。',
-      serverUrl: '服务器地址', serverUrlPh: 'https://gitea.example.com',
+      settingsTitle: 'Git 工作台',
+      settingsDesc: '接入 Gitea / GitHub / GitLab / Gitee 账号（可多个），在左侧栏工作台管理仓库、分支与 PR/MR，并让对话直接推送项目。',
+      serverUrl: '服务器地址',
       username: '用户名', usernamePh: '留空则自动使用令牌所属账号',
-      token: 'API 令牌', tokenPh: '在 Gitea「设置 → 应用」中生成', tokenKeepPh: '留空保留当前令牌',
+      token: 'API 令牌', tokenPh: '粘贴访问令牌', tokenKeepPh: '留空保留当前令牌',
       cloneRoot: '克隆根目录', cloneRootPh: '可选，默认在插件数据目录下',
-      testSave: '测试并保存', unbindAccount: '解除绑定', unbindAccountConfirm: '确认解除绑定？',
-      connected: '已连接', notConfigured: '未配置', accountInfo: '账号信息',
+      testSave: '测试并保存',
+      platform: '平台', addAccount: '添加账号', editAccount: '编辑账号', activate: '启用', activeAccount: '当前启用',
+      accountActivated: '已切换启用账号', edit: '编辑', deleteAccountConfirm: '确认删除该账号？', switchAccount: '切换账号',
+      githubUrlHint: '默认 api.github.com；企业版填 https://<host>/api/v3', selfHostHint: '自建实例填自己的地址',
+      notConfigured: '未配置',
       bindingsTitle: '会话绑定', noBindings: '没有绑定仓库的会话', unbindSession: '解绑',
-      saveOk: '账号绑定成功', clearOk: '已解除绑定', tokenRequired: '请填写 API 令牌',
-      panelTitle: 'Gitea 工作台', studioTitle: 'Gitea 工作台',
-      setupPitch: '绑定 Gitea 账号，可视化管理仓库、分支与 PR，并让对话直接提交项目。',
-      setupHint: '也可在「设置 → Gitea 工作台」中随时修改。',
+      saveOk: '账号保存成功',
+      panelTitle: 'Git 工作台', studioTitle: 'Git 工作台',
+      setupPitch: '接入 Gitea / GitHub / GitLab / Gitee 账号，可视化管理仓库、分支与 PR/MR，并让对话直接提交项目。',
+      setupHint: '也可在「设置 → Git 工作台」中随时管理账号。',
       newRepo: '新建仓库', repoName: '仓库名', repoNamePh: 'my-project',
       repoDesc: '描述', repoDescPh: '可选', privateRepo: '私有仓库', autoInit: '生成初始提交（README）',
       createRepo: '创建仓库', reposTab: '仓库',
@@ -56,16 +59,16 @@ window.__ModuleLoader__.load({
       merge: '合并', mergeConfirm: '确认合并？', mergedOk: '合并成功',
       closePull: '关闭 PR', reopenPull: '重新打开', diffEmpty: '没有文件变更', noComments: '没有评论',
       dirEmpty: '空目录', pathRoot: '根目录', fileTooLarge: '文件过大',
-      giteaSection: 'Gitea 仓库', linkRepoTitle: '关联 Gitea 仓库',
+      gitSection: 'Git 仓库', linkRepoTitle: '关联 Git 仓库',
       linkRepoDesc: '克隆并绑定仓库到当前会话，之后可直接推送迭代',
       unlink: '解除关联', unlinkConfirm: '确认解除关联？', linkFailed: '仓库关联失败',
-      branchesView: '分支', branchViewNoBinding: '当前会话未关联仓库。用输入框加号菜单或 @ 语法关联一个 Gitea 仓库，即可查看版本与改动对比。',
+      branchesView: '分支', branchViewNoBinding: '当前会话未关联仓库。用输入框加号菜单或 @ 语法关联一个仓库，即可查看版本与改动对比。',
       openStudio: '打开工作台', versionsTab: '版本', compareTab: '对比', backToCommits: '返回提交列表',
       noChanges: '没有文件改动', noCommits: '暂无提交', refPlaceholder: '分支 / 标签 / sha',
       compareSwap: '交换基准与目标', compareRun: '对比', compareSame: '基准与目标不能相同', compareEmpty: '选择两个引用（分支、标签或提交 sha）开始对比',
       ahead: '领先', behind: '落后', commitsBetween: '个提交',
       contribTab: '贡献', contribTotal: '总贡献', contribActiveDays: '活跃天数', contribMaxDay: '单日最高', contribStreak: '最长连续',
-      contribApprox: '当前 Gitea 版本无热力图接口，数据由最近更新的仓库提交估算', contribEmpty: '近一年没有贡献记录',
+      contribApprox: '该平台无热力图接口，数据由最近更新的仓库提交估算', contribEmpty: '近一年没有贡献记录',
       contribLess: '少', contribMore: '多', contribOn: '次贡献', contribYear: '近一年',
       months: '1月,2月,3月,4月,5月,6月,7月,8月,9月,10月,11月,12月', wdMon: '一', wdWed: '三', wdFri: '五',
       branchLabel: '分支', authorLabel: '作者', commentCount: '条评论',
@@ -78,19 +81,22 @@ window.__ModuleLoader__.load({
       loading: 'Loading…', refresh: 'Refresh', retry: 'Retry', error: 'Something went wrong', save: 'Save', cancel: 'Cancel',
       confirm: 'Confirm', delete: 'Delete', create: 'Create', back: 'Back', close: 'Close', copy: 'Copy',
       copied: 'Copied', copyFailed: 'Copy failed', empty: 'Nothing here yet', search: 'Search', busy: 'Working…',
-      settingsTitle: 'Gitea Studio',
-      settingsDesc: 'Bind a Gitea account to manage repositories, branches and pull requests from the sidebar panel, and let chat push projects directly.',
-      serverUrl: 'Server URL', serverUrlPh: 'https://gitea.example.com',
+      settingsTitle: 'Git Workbench',
+      settingsDesc: 'Connect Gitea / GitHub / GitLab / Gitee accounts (multiple allowed) to manage repos, branches and PRs/MRs from the sidebar panel, and let chat push projects directly.',
+      serverUrl: 'Server URL',
       username: 'Username', usernamePh: 'Leave empty to use the token owner',
-      token: 'API token', tokenPh: 'Create one in Gitea → Settings → Applications', tokenKeepPh: 'Leave empty to keep the current token',
+      token: 'API token', tokenPh: 'Paste the access token', tokenKeepPh: 'Leave empty to keep the current token',
       cloneRoot: 'Clone root directory', cloneRootPh: 'Optional; defaults to the plugin data directory',
-      testSave: 'Test & save', unbindAccount: 'Unbind account', unbindAccountConfirm: 'Unbind this account?',
-      connected: 'Connected', notConfigured: 'Not configured', accountInfo: 'Account',
+      testSave: 'Test & save',
+      platform: 'Platform', addAccount: 'Add account', editAccount: 'Edit account', activate: 'Activate', activeAccount: 'Active',
+      accountActivated: 'Active account switched', edit: 'Edit', deleteAccountConfirm: 'Delete this account?', switchAccount: 'Switch account',
+      githubUrlHint: 'Defaults to api.github.com; Enterprise: https://<host>/api/v3', selfHostHint: 'Use your own URL for self-hosted instances',
+      notConfigured: 'Not configured',
       bindingsTitle: 'Session bindings', noBindings: 'No repo-bound sessions', unbindSession: 'Unbind',
-      saveOk: 'Account bound', clearOk: 'Account unbound', tokenRequired: 'Please enter an API token',
-      panelTitle: 'Gitea Studio', studioTitle: 'Gitea Studio',
-      setupPitch: 'Bind a Gitea account to manage repos, branches and PRs visually, and let chat commit projects for you.',
-      setupHint: 'You can change this later in Settings → Gitea Studio.',
+      saveOk: 'Account saved',
+      panelTitle: 'Git Workbench', studioTitle: 'Git Workbench',
+      setupPitch: 'Connect Gitea / GitHub / GitLab / Gitee accounts to manage repos, branches and PRs/MRs visually, and let chat commit projects for you.',
+      setupHint: 'Manage accounts anytime in Settings → Git Workbench.',
       newRepo: 'New repository', repoName: 'Repository name', repoNamePh: 'my-project',
       repoDesc: 'Description', repoDescPh: 'Optional', privateRepo: 'Private repository', autoInit: 'Initialize with a README',
       createRepo: 'Create repository', reposTab: 'Repositories',
@@ -112,7 +118,7 @@ window.__ModuleLoader__.load({
       merge: 'Merge', mergeConfirm: 'Merge this PR?', mergedOk: 'Merged',
       closePull: 'Close PR', reopenPull: 'Reopen', diffEmpty: 'No file changes', noComments: 'No comments',
       dirEmpty: 'Empty directory', pathRoot: 'Root', fileTooLarge: 'File too large',
-      giteaSection: 'Gitea repositories', linkRepoTitle: 'Link Gitea repository',
+      gitSection: 'Git repositories', linkRepoTitle: 'Link Git repository',
       linkRepoDesc: 'Clone and bind a repository to this session for direct push iteration',
       unlink: 'Unlink', unlinkConfirm: 'Unlink this repository?', linkFailed: 'Repository link failed',
       branchesView: 'Branches', branchViewNoBinding: 'This session is not linked to a repository. Link one via the + menu or an @ mention to browse versions and diffs.',
@@ -121,7 +127,7 @@ window.__ModuleLoader__.load({
       compareSwap: 'Swap base and head', compareRun: 'Compare', compareSame: 'Base and head must differ', compareEmpty: 'Pick two refs (branches, tags, or commit shas) to compare',
       ahead: 'ahead', behind: 'behind', commitsBetween: 'commits',
       contribTab: 'Contributions', contribTotal: 'Total', contribActiveDays: 'Active days', contribMaxDay: 'Best day', contribStreak: 'Longest streak',
-      contribApprox: 'This Gitea version lacks the heatmap API; estimated from commits in recently updated repos', contribEmpty: 'No contributions in the past year',
+      contribApprox: 'This platform lacks a heatmap API; estimated from commits in recently updated repos', contribEmpty: 'No contributions in the past year',
       contribLess: 'Less', contribMore: 'More', contribOn: 'contributions', contribYear: 'past year',
       months: 'Jan,Feb,Mar,Apr,May,Jun,Jul,Aug,Sep,Oct,Nov,Dec', wdMon: 'Mon', wdWed: 'Wed', wdFri: 'Fri',
       branchLabel: 'Branch', authorLabel: 'Author', commentCount: 'comments',
@@ -383,34 +389,48 @@ window.__ModuleLoader__.load({
 
     /* ------------------------------------------------------ settings form */
 
-    function SettingsForm({ onSaved }) {
-      const current = useStore()
-      const state = current.state
-      const [baseUrl, setBaseUrl] = React.useState('')
-      const [username, setUsername] = React.useState('')
+    const PLATFORM_META = {
+      gitea: { label: 'Gitea', defaultBaseUrl: 'https://gitea.com', tokenHint: 'Gitea → 设置 → 应用 → 生成令牌（repo 权限）' },
+      github: { label: 'GitHub', defaultBaseUrl: 'https://api.github.com', tokenHint: 'GitHub → Settings → Developer settings → Personal access tokens（repo 范围）' },
+      gitlab: { label: 'GitLab', defaultBaseUrl: 'https://gitlab.com', tokenHint: 'GitLab → Preferences → Access Tokens（api 范围）' },
+      gitee: { label: 'Gitee', defaultBaseUrl: 'https://gitee.com', tokenHint: 'Gitee → 设置 → 私人令牌（projects 权限）' },
+    }
+    function platformLabel(id) {
+      return (PLATFORM_META[id] || PLATFORM_META.gitea).label
+    }
+    function activeAccountOf(state) {
+      if (!state || !Array.isArray(state.accounts)) return null
+      return state.accounts.find((a) => a.id === state.activeAccountId) || state.accounts[0] || null
+    }
+
+    /* Add or edit one platform account. */
+    function AccountForm({ editing, onSaved, onCancel }) {
+      const [platform, setPlatform] = React.useState(editing ? editing.platform : 'gitea')
+      const [baseUrl, setBaseUrl] = React.useState(editing ? editing.baseUrl : PLATFORM_META.gitea.defaultBaseUrl)
+      const [username, setUsername] = React.useState(editing ? editing.username : '')
       const [token, setToken] = React.useState('')
-      const [cloneRoot, setCloneRoot] = React.useState('')
       const [busy, setBusy] = React.useState(false)
       const [error, setError] = React.useState('')
-      const [ok, setOk] = React.useState('')
-      const seeded = React.useRef(false)
-      React.useEffect(() => {
-        if (state && !seeded.current) {
-          seeded.current = true
-          setBaseUrl(state.baseUrl || '')
-          setUsername(state.username || '')
-          setCloneRoot('')
-        }
-      }, [state])
+      const meta = PLATFORM_META[platform] || PLATFORM_META.gitea
+      const changePlatform = (id) => {
+        setPlatform(id)
+        const next = PLATFORM_META[id] || PLATFORM_META.gitea
+        const defaults = Object.values(PLATFORM_META).map((m) => m.defaultBaseUrl)
+        if (!editing && (baseUrl === '' || defaults.includes(baseUrl))) setBaseUrl(next.defaultBaseUrl)
+      }
       const submit = async () => {
         setBusy(true)
         setError('')
-        setOk('')
         try {
-          const result = await rpc('saveSettings', { baseUrl, username, token, cloneRoot })
-          setStore({ state: result.state, account: result.account })
-          setToken('')
-          setOk(t('saveOk'))
+          const result = await rpc('saveAccount', {
+            id: editing ? editing.id : undefined,
+            platform,
+            baseUrl,
+            username,
+            token,
+          })
+          setStore({ state: result.state })
+          void loadState().catch(() => {})
           if (onSaved) onSaved(result)
         } catch (err) {
           setError(messageOf(err))
@@ -418,33 +438,72 @@ window.__ModuleLoader__.load({
           setBusy(false)
         }
       }
+      return h('div', { className: 'gs-card', style: { padding: 14, marginBottom: 16 } },
+        h('div', { style: { fontWeight: 650, marginBottom: 10 } }, editing ? t('editAccount') : t('addAccount')),
+        h(ErrorBanner, { error }),
+        h(Field, { label: t('platform') },
+          h('select', { className: 'gs-select', value: platform, onChange: (e) => changePlatform(e.target.value) },
+            Object.values(PLATFORM_META).map((m) => h('option', { key: m.label, value: m.label.toLowerCase() }, m.label)))),
+        h(Field, { label: t('serverUrl'), hint: platform === 'github' ? t('githubUrlHint') : t('selfHostHint') },
+          h('input', { className: 'gs-input', value: baseUrl, placeholder: meta.defaultBaseUrl, onChange: (e) => setBaseUrl(e.target.value) })),
+        h(Field, { label: t('username'), hint: t('usernamePh') },
+          h('input', { className: 'gs-input', value: username, onChange: (e) => setUsername(e.target.value) })),
+        h(Field, { label: t('token'), hint: meta.tokenHint },
+          h('input', { className: 'gs-input', type: 'password', value: token, autoComplete: 'off', placeholder: editing && editing.hasToken ? t('tokenKeepPh') : t('tokenPh'), onChange: (e) => setToken(e.target.value) })),
+        h('div', { style: { display: 'flex', gap: 8 } },
+          h(Btn, { primary: true, busy, onClick: submit }, t('testSave')),
+          onCancel ? h(Btn, { onClick: onCancel }, t('cancel')) : null))
+    }
+
+    /* The account roster: activate, edit, delete; add new platform accounts. */
+    function AccountsCard() {
+      const current = useStore()
+      const state = current.state
+      const [adding, setAdding] = React.useState(false)
+      const [editing, setEditing] = React.useState(null)
+      const [error, setError] = React.useState('')
+      const [ok, setOk] = React.useState('')
+      if (!state) return null
+      const accounts = state.accounts || []
+      const activate = async (id) => {
+        setError('')
+        try {
+          const result = await rpc('setActiveAccount', { id })
+          setStore({ state: result.state })
+          void loadState().catch(() => {})
+          setOk(t('accountActivated'))
+        } catch (err) {
+          setError(messageOf(err))
+        }
+      }
+      const remove = async (id) => {
+        const result = await rpc('deleteAccount', { id })
+        setStore({ state: result.state, account: null })
+        void loadState().catch(() => {})
+      }
       return h('div', null,
         h(ErrorBanner, { error }),
         h(OkBanner, { text: ok }),
-        h(Field, { label: t('serverUrl') },
-          h('input', { className: 'gs-input', value: baseUrl, placeholder: t('serverUrlPh'), onChange: (e) => setBaseUrl(e.target.value) })),
-        h(Field, { label: t('username'), hint: t('usernamePh') },
-          h('input', { className: 'gs-input', value: username, onChange: (e) => setUsername(e.target.value) })),
-        h(Field, { label: t('token'), hint: t('tokenPh') },
-          h('input', { className: 'gs-input', type: 'password', value: token, autoComplete: 'off', placeholder: state && state.hasToken ? t('tokenKeepPh') : t('tokenPh'), onChange: (e) => setToken(e.target.value) })),
-        h(Field, { label: t('cloneRoot'), hint: state ? state.cloneRoot : '' },
-          h('input', { className: 'gs-input', value: cloneRoot, placeholder: t('cloneRootPh'), onChange: (e) => setCloneRoot(e.target.value) })),
-        h(Btn, { primary: true, busy, onClick: submit }, t('testSave')))
-    }
-
-    function AccountCard() {
-      const current = useStore()
-      const account = current.account
-      const state = current.state
-      if (!state) return null
-      if (!state.configured) return h('div', { className: 'gs-card', style: { padding: 14, marginBottom: 16 } }, h(Badge, { tone: 'warn' }, t('notConfigured')))
-      return h('div', { className: 'gs-card', style: { padding: 14, marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 } },
-        h(Avatar, { url: account && account.avatarUrl, size: 40 }),
-        h('div', { style: { minWidth: 0, flex: 1 } },
-          h('div', { style: { fontWeight: 650 } }, (account && (account.name || account.login)) || state.username),
-          h('div', { className: 'gs-muted', style: { fontSize: 12, ...S.ellipsis } },
-            (account ? '@' + account.login + ' · ' : '') + state.baseUrl)),
-        h(Badge, { tone: 'success' }, t('connected')))
+        accounts.length === 0
+          ? h('div', { className: 'gs-card', style: { padding: 14, marginBottom: 16 } }, h(Badge, { tone: 'warn' }, t('notConfigured')))
+          : h('div', { className: 'gs-card', style: { marginBottom: 16 } }, accounts.map((account) =>
+              h('div', { key: account.id, className: 'gs-row', style: { cursor: 'default' } },
+                h(Badge, { tone: account.id === state.activeAccountId ? 'brand' : 'neutral' }, platformLabel(account.platform)),
+                h('div', { style: { flex: 1, minWidth: 0 } },
+                  h('div', { style: { fontWeight: 600, fontSize: 13 } },
+                    account.username || '(?)',
+                    account.id === state.activeAccountId ? h('span', { style: { marginLeft: 8 } }, h(Badge, { tone: 'success' }, t('activeAccount'))) : null),
+                  h('div', { className: 'gs-muted gs-mono', style: { fontSize: 11, ...S.ellipsis } }, account.baseUrl)),
+                account.id !== state.activeAccountId
+                  ? h(Btn, { onClick: () => activate(account.id) }, t('activate'))
+                  : null,
+                h(Btn, { onClick: () => { setEditing(account); setAdding(false) } }, t('edit')),
+                h(ConfirmBtn, { label: t('delete'), confirmLabel: t('deleteAccountConfirm'), onConfirm: () => remove(account.id) })))),
+        adding ? h(AccountForm, { onSaved: () => { setAdding(false); setOk(t('saveOk')) }, onCancel: () => setAdding(false) }) : null,
+        editing ? h(AccountForm, { key: editing.id, editing, onSaved: () => { setEditing(null); setOk(t('saveOk')) }, onCancel: () => setEditing(null) }) : null,
+        !adding && !editing
+          ? h(Btn, { primary: true, onClick: () => setAdding(true) }, '+ ' + t('addAccount'))
+          : null)
     }
 
     function BindingsCard() {
@@ -462,7 +521,9 @@ window.__ModuleLoader__.load({
           : h('div', { className: 'gs-card' }, items.map((binding) =>
               h('div', { key: binding.sessionId, className: 'gs-row', style: { cursor: 'default' } },
                 h('div', { style: { flex: 1, minWidth: 0 } },
-                  h('div', { style: { fontWeight: 600, fontSize: 13 } }, binding.owner + '/' + binding.repo + (binding.branch ? ' · ' + binding.branch : '')),
+                  h('div', { style: { fontWeight: 600, fontSize: 13 } },
+                    binding.owner + '/' + binding.repo + (binding.branch ? ' · ' + binding.branch : ''),
+                    binding.platform ? h('span', { style: { marginLeft: 8 } }, h(Badge, null, platformLabel(binding.platform))) : null),
                   h('div', { className: 'gs-muted gs-mono', style: { fontSize: 11, ...S.ellipsis } }, binding.path || binding.sessionId)),
                 h(ConfirmBtn, {
                   label: t('unbindSession'),
@@ -477,14 +538,35 @@ window.__ModuleLoader__.load({
     function SettingsPage() {
       const current = useStore()
       const [error, setError] = React.useState('')
+      const [cloneRoot, setCloneRoot] = React.useState('')
+      const [savingRoot, setSavingRoot] = React.useState(false)
       const [ok, setOk] = React.useState('')
       React.useEffect(() => {
         loadState().catch((e) => setError(messageOf(e)))
       }, [])
-      const unbind = async () => {
-        const result = await rpc('clearSettings')
-        setStore({ state: result.state, account: null })
-        setOk(t('clearOk'))
+      const state = current.state
+      const active = activeAccountOf(state)
+      const saveCloneRoot = async () => {
+        if (!active) return
+        setSavingRoot(true)
+        setError('')
+        try {
+          const result = await rpc('saveAccount', {
+            id: active.id,
+            platform: active.platform,
+            baseUrl: active.baseUrl,
+            username: active.username,
+            token: '',
+            cloneRoot,
+          })
+          setStore({ state: result.state })
+          setCloneRoot('')
+          setOk(t('saveOk'))
+        } catch (err) {
+          setError(messageOf(err))
+        } finally {
+          setSavingRoot(false)
+        }
       }
       return h('div', { className: 'gs-root' },
         h(StyleTag),
@@ -494,10 +576,12 @@ window.__ModuleLoader__.load({
           h('div', { style: { marginTop: 16 } },
             h(ErrorBanner, { error }),
             h(OkBanner, { text: ok }),
-            h(AccountCard),
-            h(SettingsForm, null),
-            current.state && current.state.configured
-              ? h('div', { style: { marginTop: 14 } }, h(ConfirmBtn, { label: t('unbindAccount'), confirmLabel: t('unbindAccountConfirm'), onConfirm: unbind }))
+            h(AccountsCard),
+            active
+              ? h(Field, { label: t('cloneRoot'), hint: state ? state.cloneRoot : '' },
+                  h('div', { style: { display: 'flex', gap: 8 } },
+                    h('input', { className: 'gs-input', value: cloneRoot, placeholder: t('cloneRootPh'), onChange: (e) => setCloneRoot(e.target.value) }),
+                    h(Btn, { busy: savingRoot, onClick: saveCloneRoot }, t('save'))))
               : null,
             h('h3', { style: S.sectionTitle }, t('bindingsTitle')),
             h(BindingsCard))))
@@ -1062,7 +1146,7 @@ window.__ModuleLoader__.load({
 
     /* ------------------------------------------- conversation repo linking */
 
-    const GITEA_REF_PREFIX = '@gitea:'
+    const GIT_REF_PREFIX = '@git:'
 
     /* Shared repo catalog for the @ source, the + menu popup, and pickers. */
     const repoCache = { items: null, promise: null, listeners: new Set() }
@@ -1109,12 +1193,20 @@ window.__ModuleLoader__.load({
       return map
     }
     async function linkRepoToSession(sessionId, fullName, branch) {
-      const [owner, repo] = fullName.split('/')
+      const splitAt = fullName.lastIndexOf('/')
+      const owner = fullName.slice(0, splitAt)
+      const repo = fullName.slice(splitAt + 1)
       try {
         const result = await rpc('linkRepo', { sessionId, owner, repo, branch: branch || '' })
         linkStore.bySession = {
           ...linkStore.bySession,
-          [sessionId]: { sessionId, owner, repo, branch: result.branch || branch || '', path: result.path },
+          [sessionId]: {
+            sessionId, owner, repo,
+            branch: result.branch || branch || '',
+            path: result.path,
+            accountId: result.accountId || '',
+            platform: result.platform || '',
+          },
         }
         const errors = { ...linkStore.errors }
         delete errors[sessionId]
@@ -1140,11 +1232,11 @@ window.__ModuleLoader__.load({
       return item ? item.defaultBranch : ''
     }
 
-    /* @ trigger source: typing @ lists Gitea repos; a pick inserts a chip and links the session. */
+    /* @ trigger source: typing @ lists repos of the active account; a pick inserts a chip and links the session. */
     function makeGiteaTriggerSource() {
       return {
         trigger: '@',
-        name: 'gitea-repo',
+        name: 'git-repo',
         async warm() {
           if (store.state && store.state.configured) await getRepos().catch(() => {})
         },
@@ -1160,7 +1252,7 @@ window.__ModuleLoader__.load({
               label: repo.fullName,
               description: repo.description || '',
               icon: GitGlyph,
-              section: t('giteaSection'),
+              section: t('gitSection'),
               value: repo.fullName,
             }))
         },
@@ -1169,17 +1261,17 @@ window.__ModuleLoader__.load({
           void linkRepoToSession(session.sessionId, fullName, defaultBranchOf(fullName)).catch(() => {})
           return {
             insert: {
-              source: 'gitea-repo',
+              source: 'git-repo',
               ref: fullName,
               label: fullName,
               appearance: 'folder',
-              clipboardText: GITEA_REF_PREFIX + fullName,
+              clipboardText: GIT_REF_PREFIX + fullName,
             },
           }
         },
         codec: {
-          clipboardText: (ref) => GITEA_REF_PREFIX + ref,
-          serialize: (ref) => Promise.resolve(GITEA_REF_PREFIX + ref),
+          clipboardText: (ref) => GIT_REF_PREFIX + ref,
+          serialize: (ref) => Promise.resolve(GIT_REF_PREFIX + ref),
         },
       }
     }
@@ -1187,7 +1279,7 @@ window.__ModuleLoader__.load({
     /* + menu contribution: a popupSelect command listing repos for the current session. */
     function makeGiteaCommandContribution() {
       return {
-        name: 'gitea-repo',
+        name: 'git-repo',
         label: () => t('linkRepoTitle'),
         description: () => t('linkRepoDesc'),
         icon: GitGlyph,
@@ -1216,12 +1308,12 @@ window.__ModuleLoader__.load({
       }
     }
 
-    /* Render submitted @gitea:owner/repo references as compact repo chips. */
+    /* Render submitted @git:owner/repo references as compact repo chips (@gitea: kept for old messages). */
     const giteaRefRule = {
       id: 'text',
       order: 20,
       match(text, from) {
-        const re = /@gitea:([A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+)/g
+        const re = /@(?:git|gitea):([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)/g
         re.lastIndex = from
         const found = re.exec(text)
         if (!found) return undefined
@@ -1340,7 +1432,7 @@ window.__ModuleLoader__.load({
         setSelected(null)
         setResult(null)
         setError('')
-        rpc('branches', { owner: binding.owner, repo: binding.repo })
+        rpc('branches', { owner: binding.owner, repo: binding.repo, accountId: binding.accountId || undefined })
           .then((items) => {
             if (!alive) return
             setBranches(items)
@@ -1359,7 +1451,7 @@ window.__ModuleLoader__.load({
         let alive = true
         setCommits(null)
         setSelected(null)
-        rpc('commits', { owner: binding.owner, repo: binding.repo, branch, limit: 30 })
+        rpc('commits', { owner: binding.owner, repo: binding.repo, branch, limit: 30, accountId: binding.accountId || undefined })
           .then((v) => { if (alive) setCommits(v.items) })
           .catch((err) => { if (alive) setError(messageOf(err)) })
         return () => { alive = false }
@@ -1369,7 +1461,7 @@ window.__ModuleLoader__.load({
         setBusy(true)
         setError('')
         try {
-          setSelected(await rpc('commitDiff', { owner: binding.owner, repo: binding.repo, ref: commit.sha }))
+          setSelected(await rpc('commitDiff', { owner: binding.owner, repo: binding.repo, ref: commit.sha, accountId: binding.accountId || undefined }))
         } catch (err) {
           setError(messageOf(err))
         } finally {
@@ -1382,7 +1474,7 @@ window.__ModuleLoader__.load({
         setError('')
         setResult(null)
         try {
-          setResult(await rpc('compare', { owner: binding.owner, repo: binding.repo, base, head }))
+          setResult(await rpc('compare', { owner: binding.owner, repo: binding.repo, base, head, accountId: binding.accountId || undefined }))
         } catch (err) {
           setError(messageOf(err))
         } finally {
@@ -1625,7 +1717,8 @@ window.__ModuleLoader__.load({
         h('div', { style: { display: 'inline-flex', padding: 16, borderRadius: 16, background: 'var(--dsw-alias-bg-layer-1)', border: '1px solid var(--dsw-alias-border-l1)', color: 'var(--dsw-alias-brand-primary)' } }, h(GitGlyph, { size: 40 })),
         h('h2', { style: { ...S.title, marginTop: 16 } }, t('studioTitle')),
         h('p', { style: S.subtitle }, t('setupPitch')),
-        h('div', { className: 'gs-card', style: { padding: 20, marginTop: 20, textAlign: 'left' } }, h(SettingsForm, null)),
+        h('div', { className: 'gs-card', style: { padding: 20, marginTop: 20, textAlign: 'left' } },
+          h(AccountForm, { onSaved: () => { void loadState().catch(() => {}); void getRepos(true).catch(() => {}) } })),
         h('p', { style: { ...S.hint, marginTop: 12 } }, t('setupHint')))
     }
 
@@ -1651,14 +1744,39 @@ window.__ModuleLoader__.load({
         body = h(SetupCard)
       } else {
         const account = current.account
+        const active = activeAccountOf(state)
         const openRepo = (repo) => setView({ name: 'repo', owner: repo.owner, repo: repo.name })
         const openPull = (owner, repoName, index) => setView({ name: 'pull', owner, repo: repoName, index })
+        const switchAccount = async (id) => {
+          try {
+            const result = await rpc('setActiveAccount', { id })
+            setStore({ state: result.state, account: null })
+            await loadState().catch(() => {})
+            void getRepos(true).catch(() => {})
+            void refreshBindings().catch(() => {})
+            setView({ name: 'repos' })
+            setRefreshKey((n) => n + 1)
+          } catch (err) {
+            setLoadError(messageOf(err))
+          }
+        }
         body = h('div', null,
           h('div', { style: S.header },
             h(Avatar, { url: account && account.avatarUrl, size: 32 }),
             h('div', { style: { minWidth: 0 } },
-              h('div', { style: { fontWeight: 650 } }, (account && (account.name || account.login)) || state.username),
-              h('div', { className: 'gs-muted', style: { fontSize: 12, ...S.ellipsis } }, state.baseUrl)),
+              h('div', { style: { fontWeight: 650, display: 'flex', alignItems: 'center', gap: 8 } },
+                (account && (account.name || account.login)) || (active && active.username) || '',
+                active ? h(Badge, { tone: 'brand' }, platformLabel(active.platform)) : null),
+              h('div', { className: 'gs-muted', style: { fontSize: 12, ...S.ellipsis } }, active ? active.baseUrl : '')),
+            state.accounts && state.accounts.length > 1
+              ? h('select', {
+                  className: 'gs-select',
+                  style: { maxWidth: 220 },
+                  value: state.activeAccountId,
+                  title: t('switchAccount'),
+                  onChange: (e) => switchAccount(e.target.value),
+                }, state.accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl))))
+              : null,
             h('div', { style: S.spacer }),
             h(Btn, { onClick: refresh, title: t('refresh') }, '↻ ' + t('refresh'))),
           (view.name === 'repos' || view.name === 'contributions')

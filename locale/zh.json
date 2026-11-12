@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Gitea 工作台",
-    "description": "绑定 Gitea 账号并进行可视化管理：仓库、分支图、Pull Request 审阅；对话中一键把项目推送到指定仓库；选择仓库开启绑定会话，实现自动 Git 迭代。"
+    "title": "Git 工作台",
+    "description": "接入 Gitea / GitHub / GitLab / Gitee 多平台账号（可多个）并可视化管理：仓库、分支图、PR/MR 审阅、贡献热力图、版本对比；对话中一键把项目推送到指定仓库；选择仓库开启绑定会话，实现自动 Git 迭代。"
   }
 }

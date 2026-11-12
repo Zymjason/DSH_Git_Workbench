@@ -1,4 +1,4 @@
-# Gitea Studio bundle: one Host row. The row config supplies first-start
+# Git Workbench bundle: one Host row (id kept for upgrade stability). The row config supplies first-start
 # defaults; the plugin's own settings page persists later edits beside the
 # profile (data/gitea-studio/state.json) and takes precedence over these values.
 - insert:

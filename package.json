@@ -1,17 +1,19 @@
 {
   "name": "@local/gitea-studio",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
-  "description": "Bind a Gitea account and manage it visually: repositories, branch graphs, Pull Request review, one-call project pushes from chat, and repo-bound sessions for automatic Git iteration.",
+  "description": "Git 工作台 (Git Workbench): connect multiple Gitea / GitHub / GitLab / Gitee accounts and manage them visually — repositories, branch graphs, PR/MR review, contribution heatmaps, version compare, one-call project pushes from chat, and repo-bound sessions for automatic Git iteration.",
   "exports": {
     ".": "./index.js",
     "./client": "./client.js",
     "./locale/*.json": "./locale/*.json",
-    "./icon": "./icon.svg"
+    "./icon": "./icon.svg",
+    "./platforms": "./platforms.js"
   },
   "files": [
     "index.js",
+    "platforms.js",
     "client.js",
     "cordis.patch.yml",
     "locale/*.json",
@@ -19,7 +21,9 @@
     "README.md"
   ],
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
     "client": {
       "platform": "web",
       "immediately": true

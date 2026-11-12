@@ -1,6 +1,6 @@
 {
   "meta": {
-    "title": "Gitea Studio",
-    "description": "Bind a Gitea account and manage it visually: repositories, branch graphs, Pull Request review, one-call project pushes from chat, and repo-bound sessions for automatic Git iteration."
+    "title": "Git Workbench",
+    "description": "Connect multiple Gitea / GitHub / GitLab / Gitee accounts and manage them visually: repositories, branch graphs, PR/MR review, contribution heatmaps, version compare, one-call project pushes from chat, and repo-bound sessions for automatic Git iteration."
   }
 }
