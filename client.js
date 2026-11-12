@@ -23,20 +23,24 @@ window.__ModuleLoader__.load({
       confirm: '确认', delete: '删除', create: '创建', back: '返回', close: '关闭', copy: '复制',
       copied: '已复制', copyFailed: '复制失败', empty: '暂无数据', search: '搜索', busy: '处理中…',
       settingsTitle: 'Git 工作台',
-      settingsDesc: '接入 Gitea / GitHub / GitLab / Gitee 账号（可多个），在左侧栏工作台管理仓库、分支与 PR/MR，并让对话直接推送项目。',
+      settingsDesc: '同时接入 Gitea / GitHub / GitLab / Gitee 账号（可多个、同时在线），在左侧栏工作台管理仓库、分支与 PR/MR，一次提交同步推送到多平台。',
       serverUrl: '服务器地址',
       username: '用户名', usernamePh: '留空则自动使用令牌所属账号',
       token: 'API 令牌', tokenPh: '粘贴访问令牌', tokenKeepPh: '留空保留当前令牌',
       cloneRoot: '克隆根目录', cloneRootPh: '可选，默认在插件数据目录下',
       testSave: '测试并保存',
       platform: '平台', addAccount: '添加账号', editAccount: '编辑账号', activate: '启用', activeAccount: '当前启用',
-      accountActivated: '已切换启用账号', edit: '编辑', deleteAccountConfirm: '确认删除该账号？', switchAccount: '切换账号',
+      accountActivated: '已切换默认账号', edit: '编辑', deleteAccountConfirm: '确认删除该账号？', switchAccount: '切换默认账号',
+      targetAccount: '目标账号', accountLabel: '所属账号', allAccounts: '全部账号', add: '添加',
+      syncTitle: '多平台同步推送', syncTargets: '个同步目标', addSyncTarget: '添加同步目标',
+      syncEmpty: '还没有同步目标。添加后，一次提交即可同步推送到多个平台仓库。',
+      syncMessagePh: '提交说明…', syncPush: '提交并同步推送', pushNow: '提交并推送',
       githubUrlHint: '默认 api.github.com；企业版填 https://<host>/api/v3', selfHostHint: '自建实例填自己的地址',
       notConfigured: '未配置',
       bindingsTitle: '会话绑定', noBindings: '没有绑定仓库的会话', unbindSession: '解绑',
       saveOk: '账号保存成功',
       panelTitle: 'Git 工作台', studioTitle: 'Git 工作台',
-      setupPitch: '接入 Gitea / GitHub / GitLab / Gitee 账号，可视化管理仓库、分支与 PR/MR，并让对话直接提交项目。',
+      setupPitch: '同时登录 Gitea / GitHub / GitLab / Gitee 账号，可视化管理仓库、分支与 PR/MR，一次提交同步推送多平台，并让对话直接提交项目。',
       setupHint: '也可在「设置 → Git 工作台」中随时管理账号。',
       newRepo: '新建仓库', repoName: '仓库名', repoNamePh: 'my-project',
       repoDesc: '描述', repoDescPh: '可选', privateRepo: '私有仓库', autoInit: '生成初始提交（README）',
@@ -82,20 +86,24 @@ window.__ModuleLoader__.load({
       confirm: 'Confirm', delete: 'Delete', create: 'Create', back: 'Back', close: 'Close', copy: 'Copy',
       copied: 'Copied', copyFailed: 'Copy failed', empty: 'Nothing here yet', search: 'Search', busy: 'Working…',
       settingsTitle: 'Git Workbench',
-      settingsDesc: 'Connect Gitea / GitHub / GitLab / Gitee accounts (multiple allowed) to manage repos, branches and PRs/MRs from the sidebar panel, and let chat push projects directly.',
+      settingsDesc: 'Connect Gitea / GitHub / GitLab / Gitee accounts (multiple allowed, all online at once) to manage repos, branches and PRs/MRs from the sidebar panel, and sync-push one commit to several platforms.',
       serverUrl: 'Server URL',
       username: 'Username', usernamePh: 'Leave empty to use the token owner',
       token: 'API token', tokenPh: 'Paste the access token', tokenKeepPh: 'Leave empty to keep the current token',
       cloneRoot: 'Clone root directory', cloneRootPh: 'Optional; defaults to the plugin data directory',
       testSave: 'Test & save',
       platform: 'Platform', addAccount: 'Add account', editAccount: 'Edit account', activate: 'Activate', activeAccount: 'Active',
-      accountActivated: 'Active account switched', edit: 'Edit', deleteAccountConfirm: 'Delete this account?', switchAccount: 'Switch account',
+      accountActivated: 'Default account switched', edit: 'Edit', deleteAccountConfirm: 'Delete this account?', switchAccount: 'Switch default account',
+      targetAccount: 'Target account', accountLabel: 'Account', allAccounts: 'All accounts', add: 'Add',
+      syncTitle: 'Multi-platform sync push', syncTargets: 'targets', addSyncTarget: 'Add sync target',
+      syncEmpty: 'No sync targets yet. Add one to push a single commit to several platforms at once.',
+      syncMessagePh: 'Commit message…', syncPush: 'Commit & sync push', pushNow: 'Commit & push',
       githubUrlHint: 'Defaults to api.github.com; Enterprise: https://<host>/api/v3', selfHostHint: 'Use your own URL for self-hosted instances',
       notConfigured: 'Not configured',
       bindingsTitle: 'Session bindings', noBindings: 'No repo-bound sessions', unbindSession: 'Unbind',
       saveOk: 'Account saved',
       panelTitle: 'Git Workbench', studioTitle: 'Git Workbench',
-      setupPitch: 'Connect Gitea / GitHub / GitLab / Gitee accounts to manage repos, branches and PRs/MRs visually, and let chat commit projects for you.',
+      setupPitch: 'Sign in to Gitea / GitHub / GitLab / Gitee accounts at the same time, manage repos, branches and PRs/MRs visually, sync-push one commit to several platforms, and let chat commit projects for you.',
       setupHint: 'Manage accounts anytime in Settings → Git Workbench.',
       newRepo: 'New repository', repoName: 'Repository name', repoNamePh: 'my-project',
       repoDesc: 'Description', repoDescPh: 'Optional', privateRepo: 'Private repository', autoInit: 'Initialize with a README',
@@ -181,6 +189,10 @@ window.__ModuleLoader__.load({
       }, [])
       return store
     }
+    /* Repo-scoped views read the owning account from this context so every
+       call routes to the right platform even with all accounts online. */
+    const AccountScope = React.createContext('')
+
     async function loadState() {
       const state = await rpc('state')
       let account = null
@@ -237,6 +249,7 @@ window.__ModuleLoader__.load({
 .gs-link-chip{display:inline-flex;align-items:center;gap:2px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);border-radius:999px;padding:2px 6px;font-size:12px;color:var(--dsw-alias-label-secondary);max-width:280px}
 .gs-link-chip-main{border:none;background:none;color:var(--dsw-alias-brand-primary);cursor:pointer;font-size:12px;padding:0 2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px}
 .gs-link-chip-main:hover{text-decoration:underline}
+.gs-link-chip-sync{flex:none;font-size:11px;color:var(--dsw-alias-brand-primary);background:color-mix(in srgb,var(--dsw-alias-brand-primary) 12%,transparent);border-radius:8px;padding:0 6px;cursor:default}
 .gs-link-chip-x{border:none;background:none;color:var(--dsw-alias-label-secondary);cursor:pointer;font-size:11px;padding:0 3px;border-radius:4px;line-height:1.4}
 .gs-link-chip-x:hover{color:var(--dsw-alias-state-error-primary)}
 .gs-link-chip-x-armed{color:#fff;background:var(--dsw-alias-state-error-primary)}
@@ -590,6 +603,9 @@ window.__ModuleLoader__.load({
     /* -------------------------------------------------------- studio shell */
 
     function NewRepoForm({ onCreated, onCancel }) {
+      const current = useStore()
+      const accounts = (current.state && current.state.accounts) || []
+      const [accountId, setAccountId] = React.useState(current.state ? current.state.activeAccountId : '')
       const [name, setName] = React.useState('')
       const [description, setDescription] = React.useState('')
       const [isPrivate, setPrivate] = React.useState(false)
@@ -600,7 +616,7 @@ window.__ModuleLoader__.load({
         setBusy(true)
         setError('')
         try {
-          const repo = await rpc('createRepo', { name, description, private: isPrivate, autoInit })
+          const repo = await rpc('createRepo', { name, description, private: isPrivate, autoInit, accountId: accountId || undefined })
           if (onCreated) onCreated(repo)
         } catch (err) {
           setError(messageOf(err))
@@ -610,6 +626,11 @@ window.__ModuleLoader__.load({
       }
       return h('div', { className: 'gs-card', style: { padding: 16, marginBottom: 14 } },
         h(ErrorBanner, { error }),
+        accounts.length > 1
+          ? h(Field, { label: t('targetAccount') },
+              h('select', { className: 'gs-select', value: accountId, onChange: (e) => setAccountId(e.target.value) },
+                accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl)))))
+          : null,
         h('div', { style: S.grid2 },
           h(Field, { label: t('repoName') }, h('input', { className: 'gs-input', value: name, placeholder: t('repoNamePh'), onChange: (e) => setName(e.target.value) })),
           h(Field, { label: t('repoDesc') }, h('input', { className: 'gs-input', value: description, placeholder: t('repoDescPh'), onChange: (e) => setDescription(e.target.value) }))),
@@ -628,57 +649,77 @@ window.__ModuleLoader__.load({
         h('div', { style: { flex: 1, minWidth: 0 } },
           h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, minWidth: 0 } },
             h('span', { style: { fontWeight: 650, ...S.ellipsis } }, repo.fullName),
+            repo.platform ? h(Badge, { tone: 'brand' }, platformLabel(repo.platform)) : null,
             repo.private ? h(Badge, { tone: 'warn' }, t('privateBadge')) : null,
             repo.fork ? h(Badge, null, t('forkBadge')) : null,
             repo.empty ? h(Badge, null, t('emptyBadge')) : null),
           repo.description ? h('div', { className: 'gs-muted', style: { fontSize: 12, marginTop: 2, ...S.ellipsis } }, repo.description) : null),
-        h('div', { className: 'gs-muted', style: { fontSize: 12, display: 'flex', gap: 12, flex: 'none' } },
+        h('div', { className: 'gs-muted', style: { fontSize: 12, display: 'flex', gap: 12, flex: 'none', alignItems: 'center' } },
+          repo.accountUsername ? h('span', { title: t('accountLabel') }, '@' + repo.accountUsername) : null,
           h('span', null, '★ ' + repo.stars),
           h('span', null, '⑂ ' + repo.forks),
           h('span', null, relativeTime(repo.updatedAt))))
     }
 
+    /* Simultaneous-login catalog: every account's repos in one list. */
     function ReposList({ onOpen, refreshKey }) {
+      const current = useStore()
+      const accounts = (current.state && current.state.accounts) || []
       const [query, setQuery] = React.useState('')
-      const [items, setItems] = React.useState([])
-      const [page, setPage] = React.useState(1)
-      const [hasMore, setHasMore] = React.useState(false)
+      const [accountFilter, setAccountFilter] = React.useState('all')
+      const [all, setAll] = React.useState(null)
+      const [accountErrors, setAccountErrors] = React.useState([])
+      const [visible, setVisible] = React.useState(30)
       const [loading, setLoading] = React.useState(true)
       const [error, setError] = React.useState('')
       const [showNew, setShowNew] = React.useState(false)
       const requestSeq = React.useRef(0)
-      const load = React.useCallback((q, p, append) => {
+      const load = React.useCallback(() => {
         const seq = ++requestSeq.current
         setLoading(true)
         setError('')
-        rpc('repos', { query: q, page: p, limit: 30 })
+        rpc('allRepos', { limit: 100 })
           .then((result) => {
             if (seq !== requestSeq.current) return
-            setItems((prev) => (append ? prev.concat(result.items) : result.items))
-            setPage(p)
-            setHasMore(result.hasMore)
+            setAll(result.items)
+            setAccountErrors(result.errors || [])
+            setVisible(30)
           })
           .catch((err) => { if (seq === requestSeq.current) setError(messageOf(err)) })
           .finally(() => { if (seq === requestSeq.current) setLoading(false) })
       }, [])
-      React.useEffect(() => {
-        const timer = setTimeout(() => load(query.trim(), 1, false), query ? 300 : 0)
-        return () => clearTimeout(timer)
-      }, [query, load, refreshKey])
+      React.useEffect(() => { load() }, [load, refreshKey])
+      const q = query.trim().toLowerCase()
+      const filtered = (all || []).filter((repo) =>
+        (accountFilter === 'all' || repo.accountId === accountFilter) &&
+        (q === '' || repo.fullName.toLowerCase().includes(q) || (repo.description || '').toLowerCase().includes(q)))
+      const items = filtered.slice(0, visible)
       return h('div', null,
         h('div', { style: S.toolbar },
-          h('input', { className: 'gs-input', style: { maxWidth: 320 }, value: query, placeholder: t('searchRepos'), onChange: (e) => setQuery(e.target.value) }),
+          h('input', { className: 'gs-input', style: { maxWidth: 280 }, value: query, placeholder: t('searchRepos'), onChange: (e) => setQuery(e.target.value) }),
+          accounts.length > 1
+            ? h('select', { className: 'gs-select', style: { maxWidth: 220 }, value: accountFilter, onChange: (e) => setAccountFilter(e.target.value) },
+                h('option', { value: 'all' }, t('allAccounts') + ' (' + accounts.length + ')'),
+                accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl))))
+            : null,
           h('div', { style: S.spacer }),
           h(Btn, { onClick: () => setShowNew((v) => !v) }, t('newRepo')),
-          h(Btn, { onClick: () => load(query.trim(), 1, false), title: t('refresh') }, '↻')),
-        showNew ? h(NewRepoForm, { onCancel: () => setShowNew(false), onCreated: () => { setShowNew(false); load(query.trim(), 1, false) } }) : null,
-        h(ErrorBanner, { error, onRetry: () => load(query.trim(), 1, false) }),
-        loading && items.length === 0
+          h(Btn, { onClick: load, title: t('refresh') }, '↻')),
+        showNew ? h(NewRepoForm, { onCancel: () => setShowNew(false), onCreated: () => { setShowNew(false); load() } }) : null,
+        h(ErrorBanner, { error, onRetry: load }),
+        accountErrors.length > 0
+          ? h('div', { className: 'gs-card', style: { padding: '8px 14px', marginBottom: 10, fontSize: 12 } },
+              accountErrors.map((e) => h('div', { key: e.accountId, className: 'gs-muted' },
+                h(Badge, { tone: 'warn' }, platformLabel(e.platform)), ' ', (e.username || e.accountId) + ': ' + e.error)))
+          : null,
+        loading && all === null
           ? h('div', { style: { padding: 24, textAlign: 'center' } }, h(Spinner))
           : items.length === 0
             ? h(EmptyBox, { text: t('noRepos'), hint: query ? undefined : t('noReposHint') })
-            : h('div', { className: 'gs-card' }, items.map((repo) => h(RepoRow, { key: repo.fullName, repo, onOpen }))),
-        hasMore ? h('div', { style: { marginTop: 12, textAlign: 'center' } }, h(Btn, { busy: loading, onClick: () => load(query.trim(), page + 1, true) }, t('loadMore'))) : null)
+            : h('div', { className: 'gs-card' }, items.map((repo) => h(RepoRow, { key: repo.accountId + ':' + repo.fullName, repo, onOpen }))),
+        filtered.length > visible
+          ? h('div', { style: { marginTop: 12, textAlign: 'center' } }, h(Btn, { onClick: () => setVisible((n) => n + 30) }, t('loadMore')))
+          : null)
     }
 
     /* ------------------------------------------------------- branch graph */
@@ -723,17 +764,18 @@ window.__ModuleLoader__.load({
     }
 
     function BranchGraph({ owner, repo, refreshKey }) {
+      const accountId = React.useContext(AccountScope)
       const [data, setData] = React.useState(null)
       const [error, setError] = React.useState('')
       const [loading, setLoading] = React.useState(true)
       const load = React.useCallback(() => {
         setLoading(true)
         setError('')
-        rpc('graph', { owner, repo, limit: 60 })
+        rpc('graph', { owner, repo, limit: 60, accountId: accountId || undefined })
           .then(setData)
           .catch((err) => setError(messageOf(err)))
           .finally(() => setLoading(false))
-      }, [owner, repo])
+      }, [owner, repo, accountId])
       React.useEffect(() => { load() }, [load, refreshKey])
       if (loading && !data) return h('div', { style: { padding: 24, textAlign: 'center' } }, h(Spinner))
       if (error) return h(ErrorBanner, { error, onRetry: load })
@@ -789,6 +831,7 @@ window.__ModuleLoader__.load({
     }
 
     function BranchPanel({ owner, repo, refreshKey, onChanged }) {
+      const accountId = React.useContext(AccountScope)
       const [branches, setBranches] = React.useState(null)
       const [error, setError] = React.useState('')
       const [showNew, setShowNew] = React.useState(false)
@@ -796,14 +839,14 @@ window.__ModuleLoader__.load({
       const [from, setFrom] = React.useState('')
       const [busy, setBusy] = React.useState(false)
       const load = React.useCallback(() => {
-        rpc('branches', { owner, repo }).then(setBranches).catch((err) => setError(messageOf(err)))
-      }, [owner, repo])
+        rpc('branches', { owner, repo, accountId: accountId || undefined }).then(setBranches).catch((err) => setError(messageOf(err)))
+      }, [owner, repo, accountId])
       React.useEffect(() => { load() }, [load, refreshKey])
       const create = async () => {
         setBusy(true)
         setError('')
         try {
-          await rpc('createBranch', { owner, repo, branch: name, from: from || undefined })
+          await rpc('createBranch', { owner, repo, branch: name, from: from || undefined, accountId: accountId || undefined })
           setName('')
           setShowNew(false)
           load()
@@ -815,7 +858,7 @@ window.__ModuleLoader__.load({
         }
       }
       const remove = async (branch) => {
-        await rpc('deleteBranch', { owner, repo, branch })
+        await rpc('deleteBranch', { owner, repo, branch, accountId: accountId || undefined })
         load()
         if (onChanged) onChanged()
       }
@@ -844,6 +887,7 @@ window.__ModuleLoader__.load({
     /* -------------------------------------------------------- repo detail */
 
     function RepoDetail({ owner, name, onBack, onOpenPull, initialTab }) {
+      const accountId = React.useContext(AccountScope)
       const [repo, setRepo] = React.useState(null)
       const [error, setError] = React.useState('')
       const [tab, setTab] = React.useState(initialTab || 'branches')
@@ -852,22 +896,22 @@ window.__ModuleLoader__.load({
       const [chatError, setChatError] = React.useState('')
       const [copied, setCopied] = React.useState(false)
       const load = React.useCallback(() => {
-        rpc('repo', { owner, repo: name }).then(setRepo).catch((err) => setError(messageOf(err)))
-      }, [owner, name])
+        rpc('repo', { owner, repo: name, accountId: accountId || undefined }).then(setRepo).catch((err) => setError(messageOf(err)))
+      }, [owner, name, accountId])
       React.useEffect(() => { load() }, [load])
       const bump = () => setRefreshKey((n) => n + 1)
       const chat = async () => {
         setChatBusy(true)
         setChatError('')
         try {
-          const result = await rpc('openChat', { owner, repo: name, branch: repo ? repo.defaultBranch : undefined })
+          const result = await rpc('openChat', { owner, repo: name, branch: repo ? repo.defaultBranch : undefined, accountId: accountId || undefined })
           const uiWorkspace = clientCtx && clientCtx.get('uiWorkspace')
           if (!uiWorkspace || !uiWorkspace.openWorkspace || !result.workspaceId) {
             setChatError(t('chatNoService') + ' ' + result.path)
             return
           }
           await uiWorkspace.openWorkspace(result.workspaceId, (sessionId) => {
-            void rpc('bind', { sessionId, owner, repo: name, branch: result.branch || (repo && repo.defaultBranch) || '', path: result.path }).catch(() => {})
+            void rpc('bind', { sessionId, owner, repo: name, branch: result.branch || (repo && repo.defaultBranch) || '', path: result.path, accountId: accountId || undefined }).catch(() => {})
           })
           const layout = clientCtx && clientCtx.get('layout')
           if (layout && layout.selectPanel) layout.selectPanel('conversation')
@@ -883,7 +927,7 @@ window.__ModuleLoader__.load({
         setTimeout(() => setCopied(false), 2000)
       }
       const remove = async () => {
-        await rpc('deleteRepo', { owner, repo: name })
+        await rpc('deleteRepo', { owner, repo: name, accountId: accountId || undefined })
         onBack()
       }
       return h('div', null,
@@ -935,6 +979,7 @@ window.__ModuleLoader__.load({
     }
 
     function PullsList({ owner, repo, onOpen, refreshKey }) {
+      const accountId = React.useContext(AccountScope)
       const [state, setState] = React.useState('open')
       const [items, setItems] = React.useState(null)
       const [branches, setBranches] = React.useState([])
@@ -947,21 +992,21 @@ window.__ModuleLoader__.load({
       const [busy, setBusy] = React.useState(false)
       const load = React.useCallback(() => {
         setError('')
-        rpc('pulls', { owner, repo, state }).then((v) => setItems(v.items)).catch((err) => setError(messageOf(err)))
-      }, [owner, repo, state])
+        rpc('pulls', { owner, repo, state, accountId: accountId || undefined }).then((v) => setItems(v.items)).catch((err) => setError(messageOf(err)))
+      }, [owner, repo, state, accountId])
       React.useEffect(() => { load() }, [load, refreshKey])
       React.useEffect(() => {
-        rpc('branches', { owner, repo }).then((list) => {
+        rpc('branches', { owner, repo, accountId: accountId || undefined }).then((list) => {
           setBranches(list)
           const def = list.find((b) => b.default)
           if (def) setBase((prev) => prev || def.name)
         }).catch(() => {})
-      }, [owner, repo, refreshKey])
+      }, [owner, repo, refreshKey, accountId])
       const create = async () => {
         setBusy(true)
         setError('')
         try {
-          await rpc('createPull', { owner, repo, title, head, base, body })
+          await rpc('createPull', { owner, repo, title, head, base, body, accountId: accountId || undefined })
           setTitle(''); setBody(''); setShowNew(false)
           load()
         } catch (err) {
@@ -1019,6 +1064,7 @@ window.__ModuleLoader__.load({
     }
 
     function PullDetail({ owner, repo, index, onBack }) {
+      const accountId = React.useContext(AccountScope)
       const [data, setData] = React.useState(null)
       const [error, setError] = React.useState('')
       const [tab, setTab] = React.useState('files')
@@ -1027,8 +1073,8 @@ window.__ModuleLoader__.load({
       const [ok, setOk] = React.useState('')
       const load = React.useCallback(() => {
         setError('')
-        rpc('pull', { owner, repo, index }).then(setData).catch((err) => setError(messageOf(err)))
-      }, [owner, repo, index])
+        rpc('pull', { owner, repo, index, accountId: accountId || undefined }).then(setData).catch((err) => setError(messageOf(err)))
+      }, [owner, repo, index, accountId])
       React.useEffect(() => { load() }, [load])
       const act = async (kind, fn, okText) => {
         setBusy(kind)
@@ -1059,11 +1105,11 @@ window.__ModuleLoader__.load({
               h('span', null, relativeTime(pull.createdAt)),
               pull.head && pull.head.ref ? h('span', { className: 'gs-mono' }, pull.head.ref + ' → ' + (pull.base ? pull.base.ref : '')) : null)),
           pull.state === 'open' && !pull.merged
-            ? h(ConfirmBtn, { label: t('merge'), confirmLabel: t('mergeConfirm'), danger: false, onConfirm: () => act('merge', () => rpc('mergePull', { owner, repo, index }), t('mergedOk')) })
+            ? h(ConfirmBtn, { label: t('merge'), confirmLabel: t('mergeConfirm'), danger: false, onConfirm: () => act('merge', () => rpc('mergePull', { owner, repo, index, accountId: accountId || undefined }), t('mergedOk')) })
             : null,
           pull.state === 'open'
-            ? h(Btn, { busy: busy === 'state', onClick: () => act('state', () => rpc('setPullState', { owner, repo, index, state: 'closed' }), t('pullClosed')) }, t('closePull'))
-            : h(Btn, { busy: busy === 'state', onClick: () => act('state', () => rpc('setPullState', { owner, repo, index, state: 'open' }), t('pullReopened')) }, t('reopenPull'))),
+            ? h(Btn, { busy: busy === 'state', onClick: () => act('state', () => rpc('setPullState', { owner, repo, index, state: 'closed', accountId: accountId || undefined }), t('pullClosed')) }, t('closePull'))
+            : h(Btn, { busy: busy === 'state', onClick: () => act('state', () => rpc('setPullState', { owner, repo, index, state: 'open', accountId: accountId || undefined }), t('pullReopened')) }, t('reopenPull'))),
         h(ErrorBanner, { error }),
         h(OkBanner, { text: ok }),
         pull.body ? h('div', { className: 'gs-card', style: { padding: 14, marginBottom: 14, whiteSpace: 'pre-wrap', fontSize: 13 } }, pull.body) : null,
@@ -1088,12 +1134,13 @@ window.__ModuleLoader__.load({
               h('div', { className: 'gs-card', style: { padding: 12, marginTop: 12 } },
                 h('textarea', { className: 'gs-textarea', value: comment, placeholder: t('commentPh'), onChange: (e) => setComment(e.target.value) }),
                 h('div', { style: { marginTop: 8 } },
-                  h(Btn, { primary: true, busy: busy === 'comment', disabled: comment.trim() === '', onClick: () => act('comment', async () => { await rpc('commentPull', { owner, repo, index, body: comment }); setComment('') }, t('commentOk')) }, t('addComment'))))))
+                  h(Btn, { primary: true, busy: busy === 'comment', disabled: comment.trim() === '', onClick: () => act('comment', async () => { await rpc('commentPull', { owner, repo, index, body: comment, accountId: accountId || undefined }); setComment('') }, t('commentOk')) }, t('addComment'))))))
     }
 
     /* ------------------------------------------------------- file browser */
 
     function FilesBrowser({ owner, repo, defaultRef }) {
+      const accountId = React.useContext(AccountScope)
       const [path, setPath] = React.useState('')
       const [items, setItems] = React.useState(null)
       const [fileView, setFileView] = React.useState(null)
@@ -1103,16 +1150,16 @@ window.__ModuleLoader__.load({
         setLoading(true)
         setError('')
         setItems(null)
-        rpc('files', { owner, repo, path: p, ref: defaultRef || undefined })
+        rpc('files', { owner, repo, path: p, ref: defaultRef || undefined, accountId: accountId || undefined })
           .then((v) => setItems(v.items))
           .catch((err) => setError(messageOf(err)))
           .finally(() => setLoading(false))
-      }, [owner, repo, defaultRef])
+      }, [owner, repo, defaultRef, accountId])
       React.useEffect(() => { load(path) }, [path, load])
       const openFile = async (entry) => {
         setError('')
         try {
-          const result = await rpc('file', { owner, repo, path: entry.path, ref: defaultRef || undefined })
+          const result = await rpc('file', { owner, repo, path: entry.path, ref: defaultRef || undefined, accountId: accountId || undefined })
           setFileView(result)
         } catch (err) {
           setError(messageOf(err))
@@ -1156,7 +1203,7 @@ window.__ModuleLoader__.load({
     function getRepos(force) {
       if (repoCache.items && !force) return Promise.resolve(repoCache.items)
       if (repoCache.promise && !force) return repoCache.promise
-      repoCache.promise = rpc('repos', { limit: 100 })
+      repoCache.promise = rpc('allRepos', { limit: 100 })
         .then((result) => {
           repoCache.items = result.items
           repoCache.promise = null
@@ -1192,20 +1239,21 @@ window.__ModuleLoader__.load({
       notifyLinkStore()
       return map
     }
-    async function linkRepoToSession(sessionId, fullName, branch) {
+    async function linkRepoToSession(sessionId, fullName, branch, accountId) {
       const splitAt = fullName.lastIndexOf('/')
       const owner = fullName.slice(0, splitAt)
       const repo = fullName.slice(splitAt + 1)
       try {
-        const result = await rpc('linkRepo', { sessionId, owner, repo, branch: branch || '' })
+        const result = await rpc('linkRepo', { sessionId, owner, repo, branch: branch || '', accountId: accountId || undefined })
         linkStore.bySession = {
           ...linkStore.bySession,
           [sessionId]: {
             sessionId, owner, repo,
             branch: result.branch || branch || '',
             path: result.path,
-            accountId: result.accountId || '',
+            accountId: result.accountId || accountId || '',
             platform: result.platform || '',
+            targets: result.targets || [],
           },
         }
         const errors = { ...linkStore.errors }
@@ -1232,7 +1280,15 @@ window.__ModuleLoader__.load({
       return item ? item.defaultBranch : ''
     }
 
-    /* @ trigger source: typing @ lists repos of the active account; a pick inserts a chip and links the session. */
+    /* Serialize a repo reference; add a platform prefix when the same
+       owner/repo exists on several logged-in accounts. */
+    function refTextFor(fullName) {
+      const matches = (repoCache.items || []).filter((repo) => repo.fullName === fullName)
+      if (matches.length > 1 && matches[0].platform) return GIT_REF_PREFIX + matches[0].platform + ':' + fullName
+      return GIT_REF_PREFIX + fullName
+    }
+
+    /* @ trigger source: typing @ lists repos of ALL logged-in accounts; a pick inserts a chip and links the session. */
     function makeGiteaTriggerSource() {
       return {
         trigger: '@',
@@ -1250,28 +1306,30 @@ window.__ModuleLoader__.load({
             .map((repo) => ({
               name: repo.fullName,
               label: repo.fullName,
-              description: repo.description || '',
+              description: platformLabel(repo.platform) + ' · @' + (repo.accountUsername || '') + (repo.description ? ' — ' + repo.description : ''),
               icon: GitGlyph,
               section: t('gitSection'),
               value: repo.fullName,
+              accountId: repo.accountId,
+              platform: repo.platform,
             }))
         },
         onPick({ candidate, session }) {
           const fullName = candidate.value || candidate.name
-          void linkRepoToSession(session.sessionId, fullName, defaultBranchOf(fullName)).catch(() => {})
+          void linkRepoToSession(session.sessionId, fullName, defaultBranchOf(fullName), candidate.accountId).catch(() => {})
           return {
             insert: {
               source: 'git-repo',
               ref: fullName,
               label: fullName,
               appearance: 'folder',
-              clipboardText: GIT_REF_PREFIX + fullName,
+              clipboardText: refTextFor(fullName),
             },
           }
         },
         codec: {
-          clipboardText: (ref) => GIT_REF_PREFIX + ref,
-          serialize: (ref) => Promise.resolve(GIT_REF_PREFIX + ref),
+          clipboardText: (ref) => refTextFor(ref),
+          serialize: (ref) => Promise.resolve(refTextFor(ref)),
         },
       }
     }
@@ -1296,24 +1354,25 @@ window.__ModuleLoader__.load({
             return items.map((repo) => ({
               id: repo.fullName,
               label: repo.fullName,
-              detail: repo.description || '',
+              detail: platformLabel(repo.platform) + ' · @' + (repo.accountUsername || '') + (repo.description ? ' — ' + repo.description : ''),
               badge: repo.private ? t('privateBadge') : undefined,
               active: repo.fullName === activeName,
+              accountId: repo.accountId,
             }))
           },
           async onSelect(option, session) {
-            await linkRepoToSession(session.sessionId, option.id, defaultBranchOf(option.id))
+            await linkRepoToSession(session.sessionId, option.id, defaultBranchOf(option.id), option.accountId)
           },
         },
       }
     }
 
-    /* Render submitted @git:owner/repo references as compact repo chips (@gitea: kept for old messages). */
+    /* Render submitted @git:[platform:]owner/repo references as compact repo chips (@gitea: kept for old messages). */
     const giteaRefRule = {
       id: 'text',
       order: 20,
       match(text, from) {
-        const re = /@(?:git|gitea):([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)/g
+        const re = /@(?:git|gitea):(?:(gitea|github|gitlab|gitee):)?([A-Za-z0-9_.-]+(?:\/[A-Za-z0-9_.-]+)+)/g
         re.lastIndex = from
         const found = re.exec(text)
         if (!found) return undefined
@@ -1321,7 +1380,7 @@ window.__ModuleLoader__.load({
           id: 'text',
           start: found.index,
           end: found.index + found[0].length,
-          data: { text: found[0], display: '⎇ ' + found[1] },
+          data: { text: found[0], display: '⎇ ' + found[2] },
         }
       },
     }
@@ -1357,6 +1416,12 @@ window.__ModuleLoader__.load({
         title: (binding.path || fullName) + (binding.branch ? ' · ' + binding.branch : ''),
       },
         h('button', { type: 'button', className: 'gs-link-chip-main', onClick: openStudio }, '⎇ ' + fullName),
+        (binding.targets || []).length > 0
+          ? h('span', {
+              className: 'gs-link-chip-sync',
+              title: t('syncTitle') + ': ' + binding.targets.map((x) => x.owner + '/' + x.repo).join('、'),
+            }, '⇄' + binding.targets.length)
+          : null,
         h('button', {
           type: 'button',
           className: 'gs-link-chip-x' + (armed ? ' gs-link-chip-x-armed' : ''),
@@ -1399,6 +1464,105 @@ window.__ModuleLoader__.load({
         h('span', { style: { color: 'var(--dsw-alias-state-success-primary)' } }, '+' + (stats.additions ?? 0)),
         ' ',
         h('span', { style: { color: 'var(--dsw-alias-state-error-primary)' } }, '−' + (stats.deletions ?? 0)))
+    }
+
+    /* Multi-platform sync push: manage targets and push one commit to all. */
+    function SyncPanel({ sessionId, binding }) {
+      const current = useStore()
+      const accounts = (current.state && current.state.accounts) || []
+      const targets = binding.targets || []
+      const [showAdd, setShowAdd] = React.useState(false)
+      const [accountId, setAccountId] = React.useState('')
+      const [owner, setOwner] = React.useState('')
+      const [repo, setRepo] = React.useState('')
+      const [busy, setBusy] = React.useState(false)
+      const [error, setError] = React.useState('')
+      const [message, setMessage] = React.useState('')
+      const [pushBusy, setPushBusy] = React.useState(false)
+      const [pushResult, setPushResult] = React.useState(null)
+      const add = async () => {
+        setBusy(true)
+        setError('')
+        try {
+          await rpc('addSyncTarget', { sessionId, accountId, owner: owner.trim(), repo: repo.trim() })
+          setOwner(''); setRepo(''); setShowAdd(false)
+          await refreshBindings().catch(() => {})
+        } catch (err) {
+          setError(messageOf(err))
+        } finally {
+          setBusy(false)
+        }
+      }
+      const remove = async (target) => {
+        await rpc('removeSyncTarget', { sessionId, accountId: target.accountId, owner: target.owner, repo: target.repo })
+        await refreshBindings().catch(() => {})
+      }
+      const push = async () => {
+        setPushBusy(true)
+        setError('')
+        setPushResult(null)
+        try {
+          const result = await rpc('push', {
+            sessionId,
+            path: binding.path || undefined,
+            owner: binding.owner,
+            repo: binding.repo,
+            accountId: binding.accountId || undefined,
+            message,
+            sync: true,
+          })
+          setPushResult(result)
+          setMessage('')
+        } catch (err) {
+          setError(messageOf(err))
+        } finally {
+          setPushBusy(false)
+        }
+      }
+      return h('div', { className: 'gs-card', style: { padding: 12, marginBottom: 12 } },
+        h('div', { style: { display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' } },
+          h('span', { style: { fontWeight: 650, fontSize: 13 } }, '⇄ ' + t('syncTitle')),
+          targets.length > 0 ? h(Badge, { tone: 'brand' }, targets.length + ' ' + t('syncTargets')) : null,
+          h('div', { style: S.spacer }),
+          h(Btn, { onClick: () => setShowAdd((v) => !v) }, '+ ' + t('addSyncTarget'))),
+        targets.length === 0 && !showAdd
+          ? h('div', { className: 'gs-muted', style: { fontSize: 12, marginTop: 6 } }, t('syncEmpty'))
+          : null,
+        targets.length > 0
+          ? h('div', { style: { marginTop: 8 } }, targets.map((target) =>
+              h('div', { key: target.accountId + ':' + target.owner + '/' + target.repo, className: 'gs-row', style: { cursor: 'default', padding: '6px 8px' } },
+                h(Badge, { tone: 'brand' }, platformLabel(target.platform)),
+                h('span', { className: 'gs-mono', style: { flex: 1, fontSize: 12, ...S.ellipsis } },
+                  target.owner + '/' + target.repo + (target.branch ? ' · ' + target.branch : '')),
+                h(ConfirmBtn, { label: '✕', confirmLabel: t('confirm'), onConfirm: () => remove(target) }))))
+          : null,
+        showAdd
+          ? h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 } },
+              h('select', { className: 'gs-select', style: { width: 190 }, value: accountId, onChange: (e) => setAccountId(e.target.value) },
+                h('option', { value: '' }, t('targetAccount')),
+                accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl)))),
+              h('input', { className: 'gs-input', style: { width: 130 }, value: owner, placeholder: 'owner', onChange: (e) => setOwner(e.target.value) }),
+              h('input', { className: 'gs-input', style: { width: 150 }, value: repo, placeholder: 'repo', onChange: (e) => setRepo(e.target.value) }),
+              h(Btn, { primary: true, busy, disabled: !accountId || !owner.trim() || !repo.trim(), onClick: add }, t('add')),
+              h(Btn, { onClick: () => setShowAdd(false) }, t('cancel')))
+          : null,
+        h(ErrorBanner, { error }),
+        h('div', { style: { display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' } },
+          h('input', { className: 'gs-input', style: { flex: 1, minWidth: 200 }, value: message, placeholder: t('syncMessagePh'), onChange: (e) => setMessage(e.target.value) }),
+          h(Btn, { primary: true, busy: pushBusy, disabled: message.trim() === '', onClick: push },
+            targets.length > 0 ? t('syncPush') : t('pushNow'))),
+        pushResult
+          ? h('div', { style: { marginTop: 8, fontSize: 12 } },
+              h('div', { style: { display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' } },
+                h(Badge, { tone: 'success' }, '✓ ' + binding.owner + '/' + binding.repo),
+                pushResult.commit ? h('span', { className: 'gs-mono gs-muted' }, String(pushResult.commit).slice(0, 7)) : null,
+                (pushResult.sync || []).map((s) =>
+                  h(Badge, { key: s.accountId + ':' + s.owner + '/' + s.repo, tone: s.ok ? 'success' : 'error' },
+                    (s.ok ? '✓ ' : '✕ ') + platformLabel(s.platform) + ' ' + s.owner + '/' + s.repo))),
+              (pushResult.sync || []).filter((s) => !s.ok).map((s) =>
+                h('div', { key: 'err:' + s.owner + '/' + s.repo, className: 'gs-muted', style: { marginTop: 4, wordBreak: 'break-all' } },
+                  s.owner + '/' + s.repo + ': ' + s.error)))
+          : null)
     }
 
     /* The "分支" view in the conversation view ring: versions and diffs of the linked repo. */
@@ -1562,6 +1726,7 @@ window.__ModuleLoader__.load({
         h(StyleTag),
         toolbar,
         h(ErrorBanner, { error, onRetry: () => setError('') }),
+        h(SyncPanel, { sessionId, binding }),
         busy && !selected && mode === 'commits' ? h('div', { style: { padding: 12, textAlign: 'center' } }, h(Spinner)) : null,
         body)
     }
@@ -1626,13 +1791,17 @@ window.__ModuleLoader__.load({
     }
 
     function ContributionsView({ refreshKey }) {
+      const current = useStore()
+      const accounts = (current.state && current.state.accounts) || []
+      const [accountId, setAccountId] = React.useState('')
       const [data, setData] = React.useState(null)
       const [error, setError] = React.useState('')
       const [hover, setHover] = React.useState(null)
       const load = React.useCallback(() => {
         setError('')
-        rpc('contributions', {}).then(setData).catch((err) => setError(messageOf(err)))
-      }, [])
+        setData(null)
+        rpc('contributions', { accountId: accountId || undefined }).then(setData).catch((err) => setError(messageOf(err)))
+      }, [accountId])
       React.useEffect(() => { load() }, [load, refreshKey])
       if (error) return h(ErrorBanner, { error, onRetry: load })
       if (data === null) return h('div', { style: { padding: 48, textAlign: 'center' } }, h(Spinner))
@@ -1659,6 +1828,15 @@ window.__ModuleLoader__.load({
         h('div', { style: { fontSize: 20, fontWeight: 700, color: 'var(--dsw-alias-brand-primary)' } }, value),
         h('div', { className: 'gs-muted', style: { fontSize: 12, marginTop: 2 } }, label))
       return h('div', null,
+        accounts.length > 1
+          ? h('div', { style: { marginBottom: 12 } },
+              h('select', {
+                className: 'gs-select',
+                style: { maxWidth: 260 },
+                value: accountId || (current.state && current.state.activeAccountId) || '',
+                onChange: (e) => setAccountId(e.target.value),
+              }, accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl)))))
+          : null,
         h('div', { style: { display: 'flex', gap: 10, flexWrap: 'wrap', marginBottom: 14 } },
           stat(t('contribTotal'), heat.total),
           stat(t('contribActiveDays'), heat.active),
@@ -1745,8 +1923,8 @@ window.__ModuleLoader__.load({
       } else {
         const account = current.account
         const active = activeAccountOf(state)
-        const openRepo = (repo) => setView({ name: 'repo', owner: repo.owner, repo: repo.name })
-        const openPull = (owner, repoName, index) => setView({ name: 'pull', owner, repo: repoName, index })
+        const openRepo = (repo) => setView({ name: 'repo', owner: repo.owner, repo: repo.name, accountId: repo.accountId || '' })
+        const openPull = (owner, repoName, index, accountId) => setView({ name: 'pull', owner, repo: repoName, index, accountId: accountId || '' })
         const switchAccount = async (id) => {
           try {
             const result = await rpc('setActiveAccount', { id })
@@ -1788,21 +1966,21 @@ window.__ModuleLoader__.load({
             : null,
           view.name === 'repos' ? h(ReposList, { onOpen: openRepo, refreshKey }) : null,
           view.name === 'contributions' ? h(ContributionsView, { refreshKey }) : null,
-          view.name === 'repo' ? h(RepoDetail, {
-            key: view.owner + '/' + view.repo,
+          view.name === 'repo' ? h(AccountScope.Provider, { value: view.accountId || '' }, h(RepoDetail, {
+            key: (view.accountId || '') + ':' + view.owner + '/' + view.repo,
             owner: view.owner,
             name: view.repo,
             initialTab: view.tab,
             onBack: () => setView({ name: 'repos' }),
-            onOpenPull: (pull) => openPull(view.owner, view.repo, pull.index),
-          }) : null,
-          view.name === 'pull' ? h(PullDetail, {
-            key: view.owner + '/' + view.repo + '#' + view.index,
+            onOpenPull: (pull) => openPull(view.owner, view.repo, pull.index, view.accountId),
+          })) : null,
+          view.name === 'pull' ? h(AccountScope.Provider, { value: view.accountId || '' }, h(PullDetail, {
+            key: (view.accountId || '') + ':' + view.owner + '/' + view.repo + '#' + view.index,
             owner: view.owner,
             repo: view.repo,
             index: view.index,
-            onBack: () => setView({ name: 'repo', owner: view.owner, repo: view.repo, tab: 'pulls' }),
-          }) : null)
+            onBack: () => setView({ name: 'repo', owner: view.owner, repo: view.repo, tab: 'pulls', accountId: view.accountId }),
+          })) : null)
       }
       return h('div', { className: 'gs-root' }, h(StyleTag), h('div', { style: S.page }, body))
     }

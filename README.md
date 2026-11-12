@@ -13,7 +13,9 @@ DeepSeek Harness Web GUI 插件：把主流 Git 平台接入对话工作台，�
 | GitLab | `https://gitlab.com`（自建实例填自己的地址） | Preferences → Access Tokens（api 范围） |
 | Gitee | `https://gitee.com` | 设置 → 私人令牌（projects 权限） |
 
-支持**多账号接入**：可同时添加多个平台的多个账号，随时切换启用账号；会话绑定记住所属账号，切换启用账号不影响已绑定会话。
+**同时登录多账号**：所有已配置账号同时在线——仓库列表、`@` 引用、加号菜单聚合全部账号的仓库（带平台/账号标识，可按账号筛选）；仓库详情、PR/MR、贡献视图自动路由到所属账号；新建仓库可选择目标账号。默认账号仅作为对话中未指明账号时的回退。
+
+**多平台同步推送**：会话绑定可挂多个同步目标（其他平台/账号的仓库）。`git push` 一次提交后，把同一 HEAD 依次推送到主仓库与全部目标——每个目标用各自账号的临时认证头，逐目标返回结果，某个目标失败不阻塞其他目标。分支视图提供同步目标管理与「提交并同步推送」按钮；输入框仓库芯片显示 ⇄N 同步标识。
 
 ## 功能
 
@@ -24,12 +26,12 @@ DeepSeek Harness Web GUI 插件：把主流 Git 平台接入对话工作台，�
 - **文件浏览**：在线查看仓库文件（≤512KB）。
 - **贡献热力图**：近一年贡献可视化（Gitea 用原生 heatmap 接口；其他平台由最近更新仓库的提交估算，界面会标注「估算」）。
 - **对话集成**：
-  - 输入框 `@` 语法列出当前账号仓库，选择后插入 `@git:owner/repo` 引用并自动克隆、绑定会话；
+  - 输入框 `@` 语法列出**所有账号**的仓库，选择后插入 `@git:owner/repo` 引用并自动克隆、绑定会话；跨平台同名仓库自动加平台前缀消歧（`@git:github:owner/repo`）；
   - 输入框加号菜单「关联 Git 仓库」同样可用；
   - 会话轨迹右侧「分支」视图：查看绑定仓库的版本与改动对比；
   - 输入框下方显示当前会话绑定的仓库（可解除关联）。
 - **本地 Git 同步**：clone / push / pull。push 默认提交当前工作目录全部改动并推送；令牌仅通过每条命令的临时 HTTP 头传递，**不写入 `.git/config`**。
-- **会话绑定**：`link` 克隆并关联会话；绑定后对话中的 Git 操作默认指向该仓库，AI 完成修改后可主动推送迭代。
+- **会话绑定**：`link` 克隆并关联会话；绑定后对话中的 Git 操作默认指向该仓库，AI 完成修改后可主动推送迭代；`add_sync_target`/`remove_sync_target` 管理同步目标。
 
 ## 安装与配置
 
@@ -43,17 +45,18 @@ DeepSeek Harness Web GUI 插件：把主流 Git 平台接入对话工作台，�
 
 ## AI 工具
 
-插件注册 `git` 工具（31 个动作），与 UI 共享同一操作层：
+插件注册 `git` 工具（34 个动作），与 UI 共享同一操作层：
 
 - 账号：`status` `accounts` `use_account` `account`
-- 仓库：`repos` `create_repo` `update_repo` `delete_repo`
+- 仓库：`all_repos`（聚合所有账号）`repos` `create_repo` `update_repo` `delete_repo`
 - 分支 / 提交：`branches` `create_branch` `delete_branch` `graph` `commits` `compare` `commit_diff` `contributions`
 - 文件：`files` `file`
-- 本地同步：`clone` `push` `pull`
+- 本地同步：`clone` `push`（自动同步到全部目标，`sync:false` 可关闭）`pull`
+- 同步目标：`add_sync_target` `remove_sync_target`
 - PR/MR：`prs` `pr` `pr_create` `pr_comment` `pr_merge` `pr_state`
 - 会话绑定：`link` `bind` `unbind` `bindings`
 
-账号解析顺序：显式 `accountId` → 会话绑定账号 → 当前启用账号。系统提示词会注入当前启用账号与本会话绑定信息。
+账号解析顺序：显式 `accountId` → 会话绑定账号 → 当前默认账号。`link` 支持 `platform` 提示选择账号。系统提示词会注入默认账号、本会话绑定与同步目标信息。
 
 ## 架构
 

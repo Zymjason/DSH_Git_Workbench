@@ -321,6 +321,45 @@ class GitWorkbench {
     return this.clientFor(args).repos({ query, page, limit }, signal)
   }
 
+  /**
+   * Simultaneous-login catalog: fan out to every configured account and tag
+   * each repo with its account. One account failing never hides the others.
+   */
+  async allRepos(args, signal) {
+    const query = String(args?.query ?? '').trim()
+    const limit = Math.min(100, Math.max(1, Number(args?.limit) || 100))
+    const accounts = this.state.accounts.filter((account) => account.baseUrl !== '' && account.token !== '')
+    const settled = await Promise.all(
+      accounts.map(async (account) => {
+        try {
+          const result = await createClient(account).repos({ query, limit }, signal)
+          return {
+            accountId: account.id,
+            items: result.items.map((repo) => ({
+              ...repo,
+              accountId: account.id,
+              platform: account.platform,
+              accountUsername: account.username,
+            })),
+          }
+        } catch (error) {
+          return { accountId: account.id, items: [], error: messageOf(error) }
+        }
+      }),
+    )
+    const items = []
+    const errors = []
+    for (const result of settled) {
+      items.push(...result.items)
+      if (result.error) {
+        const account = this.accountById(result.accountId)
+        errors.push({ accountId: result.accountId, platform: account?.platform ?? '', username: account?.username ?? '', error: result.error })
+      }
+    }
+    items.sort((a, b) => String(b.updatedAt).localeCompare(String(a.updatedAt)))
+    return { items, errors }
+  }
+
   async createRepo(args, signal) {
     const name = String(args?.name ?? '').trim()
     if (name === '') throw new Error('仓库名不能为空')
@@ -680,7 +719,41 @@ class GitWorkbench {
     output.push(tail(pushed.stderr || pushed.stdout, 600))
     const head = await this.runGit(['rev-parse', 'HEAD'], { cwd: dir, signal })
     commit = head.ok ? head.stdout.trim() : null
-    return { pushed: true, commit, branch: targetBranch, path: dir, output: output.filter(Boolean).join('\n') }
+
+    /* Multi-platform sync: push the same HEAD to every binding target, each
+       with its own account auth. A failing target never blocks the others. */
+    const binding = this.bindingFor(String(exec?.agent?.id ?? args?.sessionId ?? ''))
+    const targets = Array.isArray(binding?.targets) ? binding.targets : []
+    const sameAsPrimary = binding && binding.owner === owner && binding.repo === repo
+    const wantSync = args?.sync === true || (args?.sync !== false && sameAsPrimary && targets.length > 0)
+    const sync = []
+    if (wantSync) {
+      for (const target of targets) {
+        if (signal?.aborted) break
+        const targetAccount = this.accountById(target.accountId)
+        if (!targetAccount) {
+          sync.push({ accountId: target.accountId, owner: target.owner, repo: target.repo, ok: false, error: '目标账号不存在或已删除' })
+          continue
+        }
+        const targetClient = createClient(targetAccount)
+        const targetUrl = targetClient.cloneUrl(target.owner, target.repo)
+        const pushBranch = target.branch || targetBranch
+        const result = await this.runGit(
+          [...targetClient.gitAuthArgs(), 'push', targetUrl, `HEAD:refs/heads/${pushBranch}`],
+          { cwd: dir, signal },
+        ).catch((error) => ({ ok: false, stderr: messageOf(error), stdout: '' }))
+        sync.push({
+          accountId: targetAccount.id,
+          platform: targetAccount.platform,
+          owner: target.owner,
+          repo: target.repo,
+          branch: pushBranch,
+          ok: result.ok,
+          ...(result.ok ? {} : { error: tail(result.stderr || result.stdout, 400) }),
+        })
+      }
+    }
+    return { pushed: true, commit, branch: targetBranch, path: dir, output: output.filter(Boolean).join('\n'), sync }
   }
 
   async currentBranch(dir, signal) {
@@ -719,6 +792,7 @@ class GitWorkbench {
       const exists = await stat(candidate).catch(() => null)
       if (exists) path = candidate
     }
+    const previous = this.bindingFor(sessionId)
     const binding = {
       sessionId,
       accountId: account?.id ?? '',
@@ -727,6 +801,7 @@ class GitWorkbench {
       repo,
       branch,
       path,
+      targets: Array.isArray(previous?.targets) ? previous.targets : [],
       boundAt: new Date().toISOString(),
     }
     this.state.bindings[sessionId] = binding
@@ -747,10 +822,63 @@ class GitWorkbench {
     return { items: Object.values(this.state.bindings) }
   }
 
+  /* ------------------------------------------- multi-platform sync targets */
+
+  /** Add one push target (another account/platform repo) to a session binding. */
+  async addSyncTarget(args, exec, signal) {
+    const sessionId = String(args?.sessionId ?? exec?.agent?.id ?? '').trim()
+    const binding = this.bindingFor(sessionId)
+    if (!binding) throw new Error('当前会话未绑定仓库：先用 link 或 bind 关联主仓库')
+    const { owner, repo } = repoRef(args?.owner, args?.repo)
+    const account = this.accountById(String(args?.accountId ?? ''))
+    if (!account) throw new Error('请指定有效的目标账号（accountId，accounts 可查）')
+    if (owner === binding.owner && repo === binding.repo && account.id === binding.accountId) {
+      throw new Error('目标与主仓库相同，无需添加')
+    }
+    const targets = Array.isArray(binding.targets) ? binding.targets : []
+    if (targets.some((target) => target.accountId === account.id && target.owner === owner && target.repo === repo)) {
+      throw new Error('该同步目标已存在')
+    }
+    await createClient(account).repo({ owner, repo }, signal)
+    const target = { accountId: account.id, platform: account.platform, owner, repo, branch: args?.branch ? branchName(args.branch) : '' }
+    binding.targets = [...targets, target]
+    await this.persist()
+    return binding
+  }
+
+  async removeSyncTarget(args, exec) {
+    const sessionId = String(args?.sessionId ?? exec?.agent?.id ?? '').trim()
+    const binding = this.bindingFor(sessionId)
+    if (!binding) throw new Error('当前会话未绑定仓库')
+    const owner = String(args?.owner ?? '').trim()
+    const repo = String(args?.repo ?? '').trim()
+    const accountId = String(args?.accountId ?? '').trim()
+    const before = Array.isArray(binding.targets) ? binding.targets.length : 0
+    binding.targets = (binding.targets ?? []).filter(
+      (target) => !(target.owner === owner && target.repo === repo && (accountId === '' || target.accountId === accountId)),
+    )
+    if (binding.targets.length === before) throw new Error('未找到该同步目标')
+    await this.persist()
+    return binding
+  }
+
+  /** Account for link/openChat: explicit id > platform hint > default resolution. */
+  resolveAccountForLink(args) {
+    if (args?.accountId) {
+      const account = this.accountById(String(args.accountId))
+      if (account) return account
+    }
+    if (args?.platform) {
+      const account = this.state.accounts.find((candidate) => candidate.platform === args.platform)
+      if (account) return account
+    }
+    return this.resolveAccount(args)
+  }
+
   /** Clone/update a repo locally and register its workspace. */
   async prepareRepo(args, signal) {
     const { owner, repo } = repoRef(args?.owner, args?.repo)
-    const account = this.resolveAccount(args)
+    const account = this.resolveAccountForLink(args)
     const cloned = await this.clone({ owner, repo, branch: args?.branch, accountId: account?.id }, signal)
     const registry = this.ctx.get('workspaceRegistry')
     let workspaceId = ''
@@ -776,7 +904,7 @@ class GitWorkbench {
       { sessionId, owner: prepared.owner, repo: prepared.repo, branch: prepared.branch, path: prepared.path, accountId: prepared.accountId },
       exec,
     )
-    return { ...prepared, sessionId, boundAt: binding.boundAt }
+    return { ...prepared, sessionId, boundAt: binding.boundAt, targets: binding.targets ?? [] }
   }
 
   /* ------------------------------------------------------------------ RPC */
@@ -790,6 +918,7 @@ class GitWorkbench {
       setActiveAccount: (args) => this.setActiveAccount(args),
       account: (args, signal) => this.account(args, signal),
       repos: (args, signal) => this.repos(args, signal),
+      allRepos: (args, signal) => this.allRepos(args, signal),
       createRepo: (args, signal) => this.createRepo(args, signal),
       updateRepo: (args, signal) => this.updateRepo(args, signal),
       deleteRepo: (args, signal) => this.deleteRepo(args, signal),
@@ -816,6 +945,8 @@ class GitWorkbench {
       bind: (args, signal, exec) => this.bind(args, exec),
       unbind: (args, signal, exec) => this.unbind(args, exec),
       bindings: () => this.bindings(),
+      addSyncTarget: (args, signal, exec) => this.addSyncTarget(args, exec, signal),
+      removeSyncTarget: (args, signal, exec) => this.removeSyncTarget(args, exec),
       openChat: (args, signal) => this.openChat(args, signal),
       linkRepo: (args, signal, exec) => this.linkRepo(args, signal, exec),
     }
@@ -862,7 +993,7 @@ class GitWorkbench {
       const definition = {
         name: 'git',
         description:
-          'Git 工作台：管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee）并同步本地项目。能力：账号（accounts 列出、use_account 切换启用账号）、仓库（repos/create_repo/update_repo/delete_repo）、分支（branches/create_branch/delete_branch/graph）、提交与文件（commits/files/file）、版本对比（compare 对比两个引用、commit_diff 查看单个提交的改动）、贡献统计（contributions 近一年贡献热力图数据）、本地 Git 同步（clone 克隆仓库、push 提交并推送当前项目、pull 拉取远端）、Pull Request/Merge Request（prs/pr/pr_create/pr_comment/pr_merge/pr_state）、会话绑定（link 克隆并关联当前会话到指定仓库、bind/unbind/bindings，绑定后本会话默认操作该仓库）。未配置账号时先用 status 查看并提示用户到「设置 → Git 工作台」添加平台账号。',
+          'Git 工作台：同时登录管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee）并同步本地项目。能力：账号（accounts 列出、use_account 切换默认账号）、仓库（all_repos 聚合所有账号仓库、repos 单账号、create_repo/update_repo/delete_repo）、分支（branches/create_branch/delete_branch/graph）、提交与文件（commits/files/file）、版本对比（compare 对比两个引用、commit_diff 查看单个提交的改动）、贡献统计（contributions 近一年贡献热力图数据）、本地 Git 同步（clone 克隆仓库、push 提交并推送当前项目、pull 拉取远端）、多平台同步推送（add_sync_target/remove_sync_target 管理会话的同步目标；push 默认把同一提交同步推送到主仓库与全部目标，逐目标返回结果）、Pull Request/Merge Request（prs/pr/pr_create/pr_comment/pr_merge/pr_state）、会话绑定（link 克隆并关联当前会话到指定仓库、bind/unbind/bindings，绑定后本会话默认操作该仓库）。未配置账号时先用 status 查看并提示用户到「设置 → Git 工作台」添加平台账号。',
         parameters: {
           type: 'object',
           additionalProperties: false,
@@ -872,16 +1003,19 @@ class GitWorkbench {
               type: 'string',
               enum: [
                 'status', 'accounts', 'use_account', 'account',
-                'repos', 'create_repo', 'update_repo', 'delete_repo',
+                'all_repos', 'repos', 'create_repo', 'update_repo', 'delete_repo',
                 'branches', 'create_branch', 'delete_branch', 'graph', 'commits',
                 'compare', 'commit_diff', 'contributions',
                 'files', 'file', 'clone', 'push', 'pull',
+                'add_sync_target', 'remove_sync_target',
                 'prs', 'pr', 'pr_create', 'pr_comment', 'pr_merge', 'pr_state',
                 'link', 'bind', 'unbind', 'bindings',
               ],
               description: '要执行的操作。',
             },
-            accountId: { type: 'string', description: '指定账号 id（accounts 可查）。省略时依次使用：会话绑定账号、当前启用账号。' },
+            accountId: { type: 'string', description: '指定账号 id（accounts 可查）。省略时依次使用：会话绑定账号、当前默认账号。add_sync_target 时必填（目标仓库所属账号）。' },
+            platform: { type: 'string', enum: ['gitea', 'github', 'gitlab', 'gitee'], description: 'link：按平台选择账号（存在多个同平台账号时仍建议用 accountId）。' },
+            sync: { type: 'boolean', description: 'push：是否同步推送到会话的全部同步目标。省略时推送到绑定主仓库会自动同步；显式 false 只推主仓库。' },
             owner: { type: 'string', description: '仓库所有者（用户名或组织；GitLab 可为子组路径）。省略时使用本会话绑定的仓库。' },
             repo: { type: 'string', description: '仓库名。省略时使用本会话绑定的仓库。' },
             branch: { type: 'string', description: '分支名。push 省略时推送当前分支；clone 省略时用默认分支。' },
@@ -928,6 +1062,7 @@ class GitWorkbench {
             }
             const map = {
               account: 'account',
+              all_repos: 'allRepos',
               repos: 'repos',
               create_repo: 'createRepo',
               update_repo: 'updateRepo',
@@ -955,12 +1090,14 @@ class GitWorkbench {
               bind: 'bind',
               unbind: 'unbind',
               bindings: 'bindings',
+              add_sync_target: 'addSyncTarget',
+              remove_sync_target: 'removeSyncTarget',
             }
             const method = map[action]
             if (!method) return { ok: false, error: `未知操作：${String(action)}` }
             const resolved = { ...(args ?? {}) }
             const binding = exec?.agent ? this.bindingFor(exec.agent.id) : undefined
-            if (binding) {
+            if (binding && !['add_sync_target', 'remove_sync_target'].includes(action)) {
               if (!resolved.owner) resolved.owner = binding.owner
               if (!resolved.repo) resolved.repo = binding.repo
               if (!resolved.accountId && binding.accountId) resolved.accountId = binding.accountId
@@ -993,21 +1130,31 @@ class GitWorkbench {
               const binding = this.bindingFor(context?.agent?.id)
               const active = this.activeAccount()
               const base =
-                'Git 工作台插件已启用：git 工具可管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee，accounts 列出、use_account 切换）并同步本地 Git。' +
+                'Git 工作台插件已启用：git 工具可同时管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee，accounts 列出、use_account 切换默认账号，all_repos 聚合所有账号仓库）并同步本地 Git。' +
                 '用户要求把项目提交/推送到远端时，用 git push（默认提交当前工作目录的全部改动并推送）；' +
                 '需要远端仓库上下文时先 git clone；查看分支结构用 git graph，审阅 PR/MR 用 git pr。' +
-                '用户消息中的 @git:owner/repo 引用表示把该仓库关联到本会话：若尚未绑定，用 git link（owner/repo）克隆并绑定后再继续。'
+                '用户消息中的 @git:owner/repo 引用表示把该仓库关联到本会话：若尚未绑定，用 git link（owner/repo，跨平台同名仓库可加 platform 或 accountId）克隆并绑定后再继续。'
               if (!binding) {
-                return base + (active ? `当前启用账号：${active.username}（${platformMeta(active.platform).label}）。` : '尚未配置账号，请引导用户到「设置 → Git 工作台」添加。')
+                return base + (active ? `当前默认账号：${active.username}（${platformMeta(active.platform).label}），已登录 ${this.state.accounts.length} 个账号。` : '尚未配置账号，请引导用户到「设置 → Git 工作台」添加。')
               }
               const account = this.accountById(binding.accountId)
+              const targets = Array.isArray(binding.targets) ? binding.targets : []
+              const syncText = targets.length > 0
+                ? `\n同步推送目标（git push 会自动把同一提交推送到这些仓库）：` +
+                  targets.map((target) => {
+                    const targetAccount = this.accountById(target.accountId)
+                    return `${target.owner}/${target.repo}（${targetAccount ? platformMeta(targetAccount.platform).label : target.platform}）`
+                  }).join('、') +
+                  '。管理目标用 git add_sync_target / remove_sync_target。'
+                : ''
               return (
                 base +
                 `\n本会话绑定仓库 ${binding.owner}/${binding.repo}` +
                 (account ? `（${platformMeta(account.platform).label} · ${account.username}）` : '') +
                 (binding.branch ? `（分支 ${binding.branch}）` : '') +
                 (binding.path ? `，本地路径 ${binding.path}` : '') +
-                '。完成代码修改后主动用 git push 提交并推送（写清提交说明），实现自动 Git 迭代；推送被拒绝时先 git pull 同步。'
+                '。完成代码修改后主动用 git push 提交并推送（写清提交说明），实现自动 Git 迭代；推送被拒绝时先 git pull 同步。' +
+                syncText
               )
             },
           }),
