@@ -1,0 +1,6 @@
+{
+  "meta": {
+    "title": "Gitea 工作台",
+    "description": "绑定 Gitea 账号并进行可视化管理：仓库、分支图、Pull Request 审阅；对话中一键把项目推送到指定仓库；选择仓库开启绑定会话，实现自动 Git 迭代。"
+  }
+}
