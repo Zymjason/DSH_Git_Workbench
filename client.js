@@ -46,7 +46,7 @@ window.__ModuleLoader__.load({
       repoDesc: '描述', repoDescPh: '可选', privateRepo: '私有仓库', autoInit: '生成初始提交（README）',
       createRepo: '创建仓库', reposTab: '仓库',
       searchRepos: '搜索仓库…', loadMore: '加载更多', noRepos: '没有仓库',
-      noReposHint: '点击右上角「新建仓库」创建第一个仓库。',
+      noReposHint: '点击右上角「新建仓库」创建；也可以用「导入地址」粘贴 Git 仓库地址。',
       privateBadge: '私有', forkBadge: '复刻', emptyBadge: '空',
       stars: '星标', forks: '复刻', updated: '更新于', defaultBranch: '默认分支',
       chatRepo: '对话此仓库', chatBusy: '正在准备仓库…',
@@ -65,6 +65,9 @@ window.__ModuleLoader__.load({
       dirEmpty: '空目录', pathRoot: '根目录', fileTooLarge: '文件过大',
       gitSection: 'Git 仓库', linkRepoTitle: '关联 Git 仓库',
       linkRepoDesc: '克隆并绑定仓库到当前会话，之后可直接推送迭代',
+      importUrl: '导入地址', importUrlBtn: '导入并打开', importUrlPh: '粘贴 Git 地址，如 https://github.com/owner/repo.git',
+      importUrlHint: '支持 https / ssh / git@host:owner/repo / host/owner/repo 形式，自动匹配已登录账号并克隆',
+      importBusy: '正在导入…', importOk: '仓库已导入', accountsOnline: '个账号同时在线',
       unlink: '解除关联', unlinkConfirm: '确认解除关联？', linkFailed: '仓库关联失败',
       branchesView: '分支', branchViewNoBinding: '当前会话未关联仓库。用输入框加号菜单或 @ 语法关联一个仓库，即可查看版本与改动对比。',
       openStudio: '打开工作台', versionsTab: '版本', compareTab: '对比', backToCommits: '返回提交列表',
@@ -109,7 +112,7 @@ window.__ModuleLoader__.load({
       repoDesc: 'Description', repoDescPh: 'Optional', privateRepo: 'Private repository', autoInit: 'Initialize with a README',
       createRepo: 'Create repository', reposTab: 'Repositories',
       searchRepos: 'Search repositories…', loadMore: 'Load more', noRepos: 'No repositories',
-      noReposHint: 'Use “New repository” to create your first one.',
+      noReposHint: 'Use “New repository”, or click “Import URL” to paste a Git repository URL.',
       privateBadge: 'Private', forkBadge: 'Fork', emptyBadge: 'Empty',
       stars: 'Stars', forks: 'Forks', updated: 'Updated', defaultBranch: 'Default branch',
       chatRepo: 'Chat with this repo', chatBusy: 'Preparing repository…',
@@ -128,6 +131,9 @@ window.__ModuleLoader__.load({
       dirEmpty: 'Empty directory', pathRoot: 'Root', fileTooLarge: 'File too large',
       gitSection: 'Git repositories', linkRepoTitle: 'Link Git repository',
       linkRepoDesc: 'Clone and bind a repository to this session for direct push iteration',
+      importUrl: 'Import URL', importUrlBtn: 'Import & open', importUrlPh: 'Paste a Git URL, e.g. https://github.com/owner/repo.git',
+      importUrlHint: 'Accepts https / ssh / git@host:owner/repo / host/owner/repo; matches a logged-in account and clones',
+      importBusy: 'Importing…', importOk: 'Repository imported', accountsOnline: 'accounts online',
       unlink: 'Unlink', unlinkConfirm: 'Unlink this repository?', linkFailed: 'Repository link failed',
       branchesView: 'Branches', branchViewNoBinding: 'This session is not linked to a repository. Link one via the + menu or an @ mention to browse versions and diffs.',
       openStudio: 'Open studio', versionsTab: 'Versions', compareTab: 'Compare', backToCommits: 'Back to commits',
@@ -254,6 +260,15 @@ window.__ModuleLoader__.load({
 .gs-link-chip-x:hover{color:var(--dsw-alias-state-error-primary)}
 .gs-link-chip-x-armed{color:#fff;background:var(--dsw-alias-state-error-primary)}
 .gs-link-chip-error{color:var(--dsw-alias-state-error-primary);border-color:color-mix(in srgb,var(--dsw-alias-state-error-primary) 40%,transparent)}
+.gs-brand-mark{width:34px;height:34px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;flex:none;color:#fff;background:linear-gradient(135deg,var(--dsw-alias-brand-primary),color-mix(in srgb,var(--dsw-alias-brand-primary) 55%,#986ee2));box-shadow:0 2px 10px color-mix(in srgb,var(--dsw-alias-brand-primary) 35%,transparent)}
+.gs-acct-chip{display:inline-flex;align-items:center;gap:5px;padding:2px 9px 2px 7px;border-radius:999px;border:1px solid var(--dsw-alias-border-l1);background:var(--dsw-alias-bg-layer-1);font-size:11px;line-height:1.6;color:var(--dsw-alias-label-secondary);max-width:200px;transition:border-color 120ms ease}
+.gs-acct-chip:hover{border-color:var(--dsw-alias-border-l2)}
+.gs-acct-dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 0 2px color-mix(in srgb,currentColor 12%,transparent)}
+.gs-acct-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-primary);font-weight:600}
+.gs-acct-platform{flex:none;opacity:.75}
+.gs-import{margin-bottom:14px}
+.gs-import-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.gs-import-row .gs-input{flex:1 1 320px;min-width:220px}
 `
 
     const S = {
@@ -410,6 +425,10 @@ window.__ModuleLoader__.load({
     }
     function platformLabel(id) {
       return (PLATFORM_META[id] || PLATFORM_META.gitea).label
+    }
+    const PLATFORM_COLORS = { gitea: '#57ab5a', github: '#4c8eda', gitlab: '#e08a3c', gitee: '#e5534b' }
+    function platformColor(id) {
+      return PLATFORM_COLORS[id] || '#6e7781'
     }
     function activeAccountOf(state) {
       if (!state || !Array.isArray(state.accounts)) return null
@@ -724,9 +743,9 @@ window.__ModuleLoader__.load({
 
     /* ------------------------------------------------------- branch graph */
 
-    const LANE_W = 22
-    const ROW_H = 30
-    const GRAPH_PAD = 12
+    const LANE_W = 24
+    const ROW_H = 34
+    const GRAPH_PAD = 14
 
     /** Assign each commit a lane so parents continue their child's lane. */
     function layoutGraph(nodes) {
@@ -763,11 +782,19 @@ window.__ModuleLoader__.load({
       return { rowOf, laneOf, laneCount: Math.max(1, lanes.length) }
     }
 
+    /** One edge: straight inside a lane, smooth S-curve when switching lanes. */
+    function edgePath(x1, y1, x2, y2) {
+      if (x1 === x2) return 'M ' + x1 + ' ' + y1 + ' L ' + x2 + ' ' + y2
+      const lift = Math.max(6, Math.min(16, Math.abs(y2 - y1) * 0.5))
+      return 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + (y1 + lift) + ', ' + x2 + ' ' + (y2 - lift) + ', ' + x2 + ' ' + y2
+    }
+
     function BranchGraph({ owner, repo, refreshKey }) {
       const accountId = React.useContext(AccountScope)
       const [data, setData] = React.useState(null)
       const [error, setError] = React.useState('')
       const [loading, setLoading] = React.useState(true)
+      const [hoverRow, setHoverRow] = React.useState(-1)
       const load = React.useCallback(() => {
         setLoading(true)
         setError('')
@@ -781,12 +808,12 @@ window.__ModuleLoader__.load({
       if (error) return h(ErrorBanner, { error, onRetry: load })
       if (!data || data.nodes.length === 0) return h(EmptyBox, { text: t('graphEmpty') })
       const { rowOf, laneOf, laneCount } = layoutGraph(data.nodes)
-      const xOf = (lane) => GRAPH_PAD + lane * LANE_W + 9
+      const xOf = (lane) => GRAPH_PAD + lane * LANE_W + 10
       const yOf = (row) => row * ROW_H + ROW_H / 2
-      const svgWidth = GRAPH_PAD * 2 + laneCount * LANE_W
+      const svgWidth = GRAPH_PAD * 2 + laneCount * LANE_W + 4
       const svgHeight = data.nodes.length * ROW_H
       const colorOfLane = (lane) => PALETTE[((lane % PALETTE.length) + PALETTE.length) % PALETTE.length]
-      return h('div', { className: 'gs-card', style: { padding: '12px 8px' } },
+      return h('div', { className: 'gs-card', style: { padding: '10px 6px 10px 2px' } },
         h('div', { className: 'gs-graph-wrap' },
           h('svg', { width: svgWidth, height: svgHeight, style: { flex: 'none' }, 'aria-hidden': true },
             data.edges.map((edge, index) => {
@@ -794,37 +821,37 @@ window.__ModuleLoader__.load({
               const toLane = laneOf.get(edge.to)
               const fromRow = rowOf.get(edge.from)
               const toRow = rowOf.get(edge.to)
-              if (fromLane === undefined || toLane === undefined) return null
-              const x1 = xOf(fromLane)
-              const y1 = yOf(fromRow) + 6
-              const x2 = xOf(toLane)
-              const y2 = yOf(toRow) - 6
-              const mid = (y1 + y2) / 2
-              return h('path', {
-                key: index,
-                d: 'M ' + x1 + ' ' + y1 + ' C ' + x1 + ' ' + mid + ', ' + x2 + ' ' + mid + ', ' + x2 + ' ' + y2,
-                fill: 'none',
-                stroke: colorOfLane(fromLane),
-                strokeWidth: 2,
-                strokeOpacity: 0.5,
-              })
+              if (fromLane === undefined || toLane === undefined || fromRow === undefined || toRow === undefined) return null
+              const color = colorOfLane(fromLane)
+              const d = edgePath(xOf(fromLane), yOf(fromRow) + 7, xOf(toLane), yOf(toRow) - 7)
+              return h('g', { key: index },
+                h('path', { d, fill: 'none', stroke: color, strokeWidth: 5, strokeOpacity: 0.13, strokeLinecap: 'round' }),
+                h('path', { d, fill: 'none', stroke: color, strokeWidth: 2, strokeOpacity: 0.72, strokeLinecap: 'round' }))
             }),
-            data.nodes.map((node) => {
+            data.nodes.map((node, row) => {
               const lane = laneOf.get(node.sha)
-              return h('circle', {
-                key: node.sha,
-                cx: xOf(lane),
-                cy: yOf(rowOf.get(node.sha)),
-                r: 5,
-                fill: colorOfLane(lane),
-                stroke: 'var(--dsw-alias-bg-layer-1)',
-                strokeWidth: 2,
-              })
+              const x = xOf(lane)
+              const y = yOf(row)
+              const color = colorOfLane(lane)
+              const isMerge = Array.isArray(node.parents) && node.parents.length > 1
+              const active = hoverRow === row
+              return h('g', { key: node.sha },
+                active ? h('circle', { cx: x, cy: y, r: 12, fill: color, opacity: 0.14 }) : null,
+                h('circle', { cx: x, cy: y, r: isMerge ? 7 : 6, fill: 'none', stroke: color, strokeOpacity: active ? 0.55 : 0.28, strokeWidth: 1.4 }),
+                h('circle', { cx: x, cy: y, r: isMerge ? 3.4 : 4.3, fill: color, stroke: 'var(--dsw-alias-bg-layer-1)', strokeWidth: 1.5 }),
+                isMerge ? h('circle', { cx: x, cy: y, r: 1.3, fill: 'var(--dsw-alias-bg-layer-1)' }) : null)
             })),
-          h('div', { style: { flex: 1, minWidth: 420 } }, data.nodes.map((node) =>
-            h('div', { key: node.sha, className: 'gs-commit-row', title: node.message },
+          h('div', { style: { flex: 1, minWidth: 420 } }, data.nodes.map((node, row) =>
+            h('div', {
+              key: node.sha,
+              className: 'gs-commit-row',
+              title: node.message,
+              onMouseEnter: () => setHoverRow(row),
+              onMouseLeave: () => setHoverRow(-1),
+            },
               h('span', { style: { flex: 1, ...S.ellipsis, fontSize: 13 } }, node.message.split('\n')[0]),
-              node.branches.map((branch) => h(Badge, { key: branch, tone: 'brand' }, branch)),
+              node.branches.slice(0, 2).map((branch) => h(Badge, { key: branch, tone: 'brand' }, branch)),
+              node.branches.length > 2 ? h(Badge, { key: 'more-branches' }, '+' + (node.branches.length - 2)) : null,
               h('span', { className: 'gs-mono gs-muted', style: { flex: 'none' } }, node.short),
               h('span', { className: 'gs-muted', style: { flex: 'none', fontSize: 12, maxWidth: 110, ...S.ellipsis } }, node.author),
               h('span', { className: 'gs-muted', style: { flex: 'none', fontSize: 12, width: 70, textAlign: 'right' } }, relativeTime(node.date)))))))
@@ -1905,6 +1932,10 @@ window.__ModuleLoader__.load({
       const [loadError, setLoadError] = React.useState('')
       const [view, setView] = React.useState({ name: 'repos' })
       const [refreshKey, setRefreshKey] = React.useState(0)
+      const [showImport, setShowImport] = React.useState(false)
+      const [importUrl, setImportUrl] = React.useState('')
+      const [importBusy, setImportBusy] = React.useState(false)
+      const [importError, setImportError] = React.useState('')
       React.useEffect(() => {
         loadState().catch((err) => setLoadError(messageOf(err)))
       }, [])
@@ -1921,42 +1952,58 @@ window.__ModuleLoader__.load({
       } else if (!state.configured) {
         body = h(SetupCard)
       } else {
-        const account = current.account
-        const active = activeAccountOf(state)
+        const accounts = state.accounts || []
         const openRepo = (repo) => setView({ name: 'repo', owner: repo.owner, repo: repo.name, accountId: repo.accountId || '' })
         const openPull = (owner, repoName, index, accountId) => setView({ name: 'pull', owner, repo: repoName, index, accountId: accountId || '' })
-        const switchAccount = async (id) => {
+        const runImport = async () => {
+          const url = importUrl.trim()
+          if (url === '') return
+          setImportBusy(true)
+          setImportError('')
           try {
-            const result = await rpc('setActiveAccount', { id })
-            setStore({ state: result.state, account: null })
-            await loadState().catch(() => {})
-            void getRepos(true).catch(() => {})
+            const result = await rpc('importRepo', { url })
+            setShowImport(false)
+            setImportUrl('')
+            setView({ name: 'repo', owner: result.owner, repo: result.repo, accountId: result.accountId || '' })
             void refreshBindings().catch(() => {})
-            setView({ name: 'repos' })
-            setRefreshKey((n) => n + 1)
           } catch (err) {
-            setLoadError(messageOf(err))
+            setImportError(messageOf(err))
+          } finally {
+            setImportBusy(false)
           }
         }
         body = h('div', null,
           h('div', { style: S.header },
-            h(Avatar, { url: account && account.avatarUrl, size: 32 }),
-            h('div', { style: { minWidth: 0 } },
-              h('div', { style: { fontWeight: 650, display: 'flex', alignItems: 'center', gap: 8 } },
-                (account && (account.name || account.login)) || (active && active.username) || '',
-                active ? h(Badge, { tone: 'brand' }, platformLabel(active.platform)) : null),
-              h('div', { className: 'gs-muted', style: { fontSize: 12, ...S.ellipsis } }, active ? active.baseUrl : '')),
-            state.accounts && state.accounts.length > 1
-              ? h('select', {
-                  className: 'gs-select',
-                  style: { maxWidth: 220 },
-                  value: state.activeAccountId,
-                  title: t('switchAccount'),
-                  onChange: (e) => switchAccount(e.target.value),
-                }, state.accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl))))
-              : null,
+            h('div', { style: { display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 } },
+              h('div', { className: 'gs-brand-mark' }, h(GitGlyph, { size: 20 })),
+              h('div', { style: { minWidth: 0 } },
+                h('h2', { style: { ...S.title, margin: 0 } }, t('studioTitle')),
+                h('div', { style: { display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginTop: 3 } },
+                  accounts.map((item) => h('span', {
+                    key: item.id,
+                    className: 'gs-acct-chip',
+                    title: platformLabel(item.platform) + ' · ' + (item.username || item.baseUrl) + ' · ' + item.baseUrl,
+                  },
+                    h('i', { className: 'gs-acct-dot', style: { background: platformColor(item.platform) } }),
+                    h('span', { className: 'gs-acct-platform' }, platformLabel(item.platform)),
+                    h('span', { className: 'gs-acct-name' }, item.username || item.baseUrl))),
+                  accounts.length > 1 ? h('span', { className: 'gs-muted', style: { fontSize: 11 } }, '· ' + accounts.length + ' ' + t('accountsOnline')) : null))),
             h('div', { style: S.spacer }),
+            h(Btn, { onClick: () => { setShowImport((v) => !v); setImportError('') } }, '＋ ' + t('importUrl')),
             h(Btn, { onClick: refresh, title: t('refresh') }, '↻ ' + t('refresh'))),
+          showImport ? h('div', { className: 'gs-card gs-import', style: { padding: 12 } },
+            h('div', { className: 'gs-import-row' },
+              h('input', {
+                className: 'gs-input',
+                value: importUrl,
+                placeholder: t('importUrlPh'),
+                onChange: (e) => setImportUrl(e.target.value),
+                onKeyDown: (e) => { if (e.key === 'Enter') void runImport() },
+              }),
+              h(Btn, { primary: true, busy: importBusy, disabled: importUrl.trim() === '', onClick: () => void runImport() }, importBusy ? t('importBusy') : t('importUrlBtn')),
+              h(Btn, { onClick: () => { setShowImport(false); setImportUrl(''); setImportError('') } }, t('cancel'))),
+            h('div', { className: 'gs-muted', style: { fontSize: 12, marginTop: 8 } }, t('importUrlHint')),
+            h(ErrorBanner, { error: importError })) : null,
           (view.name === 'repos' || view.name === 'contributions')
             ? h(Tabs, {
                 tabs: [{ id: 'repos', label: t('reposTab') }, { id: 'contributions', label: t('contribTab') }],

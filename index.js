@@ -73,6 +73,61 @@ function repoRef(owner, repo) {
   return { owner: o, repo: r }
 }
 
+/** Host of an account's API root, normalized for repo-URL matching. */
+function accountHost(account) {
+  let host = ''
+  try {
+    host = new URL(String(account?.baseUrl ?? '')).hostname.toLowerCase()
+  } catch {
+    host = ''
+  }
+  if (account?.platform === 'github' && (host === '' || host === 'api.github.com' || host === 'github.com')) {
+    return 'github.com'
+  }
+  return host.replace(/^www\./, '')
+}
+
+/**
+ * Parse a Git repository address into platform-neutral coordinates.
+ * Accepts https://host/owner/repo(.git), ssh://git@host[:port]/owner/repo.git,
+ * scp-style git@host:owner/repo.git and scheme-less host/owner/repo.
+ * GitLab subgroup paths (group/sub/repo) stay in `owner`.
+ */
+function parseRepoUrl(raw) {
+  const value = String(raw ?? '').trim()
+  if (value === '') throw new Error('请填写 Git 仓库地址（如 https://github.com/owner/repo.git）')
+  let host = ''
+  let path = ''
+  const withScheme = /^(?:https?|ssh|git|git\+ssh):\/\/(?:[^@/]*@)?([^/:]+)(?::\d+)?\/(.+)$/i.exec(value)
+  if (withScheme) {
+    host = withScheme[1].toLowerCase()
+    path = withScheme[2]
+  } else {
+    const scp = /^(?:[^@/]+@)?([^/:]+):(.+)$/.exec(value)
+    if (scp) {
+      host = scp[1].toLowerCase()
+      path = scp[2]
+    } else {
+      const bare = /^([\w.-]+\.[a-z]{2,})(?::\d+)?\/(.+)$/i.exec(value)
+      if (!bare) throw new Error(`无法识别的仓库地址：${value}（支持 https://host/owner/repo、git@host:owner/repo 等形式）`)
+      host = bare[1].toLowerCase()
+      path = bare[2]
+    }
+  }
+  path = path
+    .split(/[?#]/)[0]
+    .replace(/\/+$/, '')
+    .replace(/\.git$/i, '')
+    .replace(/^\/+/, '')
+  const segments = path.split('/').filter(Boolean)
+  if (segments.length < 2) throw new Error(`仓库地址缺少 owner/repo：${value}`)
+  const repo = segments.pop()
+  const owner = segments.join('/')
+  const ownerOk = /^[\w./-]+$/.test(owner) && !owner.startsWith('/') && !owner.endsWith('/') && !owner.includes('..') && !owner.includes('//')
+  if (!ownerOk || !/^[\w.-]+$/.test(repo)) throw new Error(`仓库地址无效：${value}`)
+  return { host: host.replace(/^www\./, ''), owner, repo }
+}
+
 /** Validate a git branch name (loose, conservative). */
 function branchName(raw) {
   const value = String(raw ?? '').trim()
@@ -228,6 +283,12 @@ class GitWorkbench {
     const account = this.resolveAccount(args, exec)
     if (!account) throw new Error('尚未配置 Git 账号：请在「设置 → Git 工作台」添加平台账号')
     return createClient(account)
+  }
+
+  /** The logged-in account whose host matches a repo URL host (www-insensitive). */
+  accountForHost(host) {
+    const target = String(host ?? '').toLowerCase().replace(/^www\./, '')
+    return this.state.accounts.find((account) => accountHost(account) === target) ?? null
   }
 
   effectiveCloneRoot() {
@@ -907,6 +968,47 @@ class GitWorkbench {
     return { ...prepared, sessionId, boundAt: binding.boundAt, targets: binding.targets ?? [] }
   }
 
+  /**
+   * Import a repository straight from a Git URL: parse the address, match it
+   * to a logged-in account by host, clone it locally, and optionally bind the
+   * current session (bind=true) so pushes and tool calls target it.
+   */
+  async importRepo(args, signal, exec) {
+    const url = String(args?.url ?? '').trim()
+    const ref = parseRepoUrl(url)
+    const account = this.accountForHost(ref.host)
+    if (!account) {
+      const known =
+        ref.host === 'github.com' ? 'GitHub'
+        : ref.host === 'gitlab.com' ? 'GitLab'
+        : ref.host === 'gitee.com' ? 'Gitee'
+        : 'Gitea'
+      throw new Error(`地址 ${ref.host} 未匹配到已登录账号：请先在「设置 → Git 工作台」添加 ${known} 平台账号`)
+    }
+    const branch = args?.branch ? branchName(args.branch) : ''
+    const prepared = await this.prepareRepo(
+      { owner: ref.owner, repo: ref.repo, branch: branch || undefined, accountId: account.id },
+      signal,
+    )
+    const base = {
+      ...prepared,
+      url: `https://${ref.host}/${ref.owner}/${ref.repo}`,
+      host: ref.host,
+      accountId: account.id,
+      platform: account.platform,
+    }
+    if (args?.bind === true) {
+      const sessionId = String(args?.sessionId ?? exec?.agent?.id ?? '').trim()
+      if (sessionId === '') throw new Error('bind 导入需要会话 id')
+      const binding = await this.bind(
+        { sessionId, owner: prepared.owner, repo: prepared.repo, branch, path: prepared.path, accountId: account.id },
+        exec,
+      )
+      return { ...base, bound: true, sessionId, boundAt: binding.boundAt, targets: binding.targets ?? [] }
+    }
+    return { ...base, bound: false }
+  }
+
   /* ------------------------------------------------------------------ RPC */
 
   /** One dispatch table shared by the UI route and the agent tool. */
@@ -949,6 +1051,7 @@ class GitWorkbench {
       removeSyncTarget: (args, signal, exec) => this.removeSyncTarget(args, exec),
       openChat: (args, signal) => this.openChat(args, signal),
       linkRepo: (args, signal, exec) => this.linkRepo(args, signal, exec),
+      importRepo: (args, signal, exec) => this.importRepo(args, signal, exec),
     }
   }
 
@@ -993,7 +1096,7 @@ class GitWorkbench {
       const definition = {
         name: 'git',
         description:
-          'Git 工作台：同时登录管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee）并同步本地项目。能力：账号（accounts 列出、use_account 切换默认账号）、仓库（all_repos 聚合所有账号仓库、repos 单账号、create_repo/update_repo/delete_repo）、分支（branches/create_branch/delete_branch/graph）、提交与文件（commits/files/file）、版本对比（compare 对比两个引用、commit_diff 查看单个提交的改动）、贡献统计（contributions 近一年贡献热力图数据）、本地 Git 同步（clone 克隆仓库、push 提交并推送当前项目、pull 拉取远端）、多平台同步推送（add_sync_target/remove_sync_target 管理会话的同步目标；push 默认把同一提交同步推送到主仓库与全部目标，逐目标返回结果）、Pull Request/Merge Request（prs/pr/pr_create/pr_comment/pr_merge/pr_state）、会话绑定（link 克隆并关联当前会话到指定仓库、bind/unbind/bindings，绑定后本会话默认操作该仓库）。未配置账号时先用 status 查看并提示用户到「设置 → Git 工作台」添加平台账号。',
+          'Git 工作台：同时登录管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee）并同步本地项目。能力：账号（accounts 列出、use_account 切换默认账号）、仓库（all_repos 聚合所有账号仓库、repos 单账号、create_repo/update_repo/delete_repo、import_repo 直接粘贴 Git 仓库地址导入）、分支（branches/create_branch/delete_branch/graph）、提交与文件（commits/files/file）、版本对比（compare 对比两个引用、commit_diff 查看单个提交的改动）、贡献统计（contributions 近一年贡献热力图数据）、本地 Git 同步（clone 克隆仓库、push 提交并推送当前项目、pull 拉取远端）、多平台同步推送（add_sync_target/remove_sync_target 管理会话的同步目标；push 默认把同一提交同步推送到主仓库与全部目标，逐目标返回结果）、Pull Request/Merge Request（prs/pr/pr_create/pr_comment/pr_merge/pr_state）、会话绑定（link 克隆并关联当前会话到指定仓库、bind/unbind/bindings，绑定后本会话默认操作该仓库）。未配置账号时先用 status 查看并提示用户到「设置 → Git 工作台」添加平台账号。',
         parameters: {
           type: 'object',
           additionalProperties: false,
@@ -1003,7 +1106,7 @@ class GitWorkbench {
               type: 'string',
               enum: [
                 'status', 'accounts', 'use_account', 'account',
-                'all_repos', 'repos', 'create_repo', 'update_repo', 'delete_repo',
+                'all_repos', 'repos', 'create_repo', 'update_repo', 'delete_repo', 'import_repo',
                 'branches', 'create_branch', 'delete_branch', 'graph', 'commits',
                 'compare', 'commit_diff', 'contributions',
                 'files', 'file', 'clone', 'push', 'pull',
@@ -1018,6 +1121,8 @@ class GitWorkbench {
             sync: { type: 'boolean', description: 'push：是否同步推送到会话的全部同步目标。省略时推送到绑定主仓库会自动同步；显式 false 只推主仓库。' },
             owner: { type: 'string', description: '仓库所有者（用户名或组织；GitLab 可为子组路径）。省略时使用本会话绑定的仓库。' },
             repo: { type: 'string', description: '仓库名。省略时使用本会话绑定的仓库。' },
+            url: { type: 'string', description: 'import_repo：Git 仓库地址，支持 https://host/owner/repo[.git]、git@host:owner/repo.git、host/owner/repo 形式。' },
+            bind: { type: 'boolean', description: 'import_repo：是否同时把导入的仓库关联到当前会话（默认 false）。' },
             branch: { type: 'string', description: '分支名。push 省略时推送当前分支；clone 省略时用默认分支。' },
             from: { type: 'string', description: 'create_branch：源分支，省略时用默认分支。' },
             message: { type: 'string', description: 'push：提交说明（必填）；pr_merge：合并说明（可选）。' },
@@ -1067,6 +1172,7 @@ class GitWorkbench {
               create_repo: 'createRepo',
               update_repo: 'updateRepo',
               delete_repo: 'deleteRepo',
+              import_repo: 'importRepo',
               branches: 'branches',
               create_branch: 'createBranch',
               delete_branch: 'deleteBranch',
@@ -1097,7 +1203,7 @@ class GitWorkbench {
             if (!method) return { ok: false, error: `未知操作：${String(action)}` }
             const resolved = { ...(args ?? {}) }
             const binding = exec?.agent ? this.bindingFor(exec.agent.id) : undefined
-            if (binding && !['add_sync_target', 'remove_sync_target'].includes(action)) {
+            if (binding && !['add_sync_target', 'remove_sync_target', 'import_repo'].includes(action)) {
               if (!resolved.owner) resolved.owner = binding.owner
               if (!resolved.repo) resolved.repo = binding.repo
               if (!resolved.accountId && binding.accountId) resolved.accountId = binding.accountId
@@ -1133,7 +1239,8 @@ class GitWorkbench {
                 'Git 工作台插件已启用：git 工具可同时管理多个 Git 平台账号（Gitea/GitHub/GitLab/Gitee，accounts 列出、use_account 切换默认账号，all_repos 聚合所有账号仓库）并同步本地 Git。' +
                 '用户要求把项目提交/推送到远端时，用 git push（默认提交当前工作目录的全部改动并推送）；' +
                 '需要远端仓库上下文时先 git clone；查看分支结构用 git graph，审阅 PR/MR 用 git pr。' +
-                '用户消息中的 @git:owner/repo 引用表示把该仓库关联到本会话：若尚未绑定，用 git link（owner/repo，跨平台同名仓库可加 platform 或 accountId）克隆并绑定后再继续。'
+                '用户消息中的 @git:owner/repo 引用表示把该仓库关联到本会话：若尚未绑定，用 git link（owner/repo，跨平台同名仓库可加 platform 或 accountId）克隆并绑定后再继续。' +
+                '用户直接给出 Git 仓库地址（URL）要求导入或关联时，用 git import_repo（url 支持 https://host/owner/repo、git@host:owner/repo.git、host/owner/repo；bind:true 同时关联当前会话）。'
               if (!binding) {
                 return base + (active ? `当前默认账号：${active.username}（${platformMeta(active.platform).label}），已登录 ${this.state.accounts.length} 个账号。` : '尚未配置账号，请引导用户到「设置 → Git 工作台」添加。')
               }
@@ -1178,3 +1285,6 @@ export async function apply(ctx, config) {
     ;(ctx.logger ?? console).warn?.(`git-workbench: 初始化失败: ${messageOf(error)}`)
   }
 }
+
+/* Exported for host tests: URL normalization is pure and side-effect free. */
+export { accountHost, parseRepoUrl }

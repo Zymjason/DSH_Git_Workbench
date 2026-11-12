@@ -20,6 +20,7 @@ DeepSeek Harness Web GUI 插件：把主流 Git 平台接入对话工作台，�
 ## 功能
 
 - **仓库管理**：列表 / 搜索 / 新建 / 删除 / 复制克隆地址，私有、复刻、空仓库标识。
+- **仓库地址导入**：直接粘贴 Git 仓库地址（`https://host/owner/repo[.git]`、`git@host:owner/repo.git`、`host/owner/repo`）导入——自动匹配已登录账号、解析 owner/repo（含 GitLab 子组路径），克隆后打开仓库；AI 工具新增 `import_repo`，可 `bind:true` 同时关联当前会话。
 - **分支**：分支提交图（graph）、新建 / 删除分支、受保护标识。
 - **版本与对比**：提交历史、单提交 diff、任意两个引用（分支 / 标签 / sha）对比，ahead/behind 统计。
 - **PR / MR**：列表、详情、文件变更、评论、创建、合并（merge/rebase/squash，按平台支持）、关闭 / 重开。GitLab 使用 Merge Request。
@@ -39,16 +40,16 @@ DeepSeek Harness Web GUI 插件：把主流 Git 平台接入对话工作台，�
 
 1. 打开「设置 → Git 工作台」；
 2. 点击「添加账号」，选择平台、填写服务器地址与令牌，「测试并保存」；
-3. 可继续添加其他平台账号；左侧栏「Git 工作台」面板顶部可切换启用账号。
+3. 可继续添加其他平台账号；所有账号同时在线，工作台顶部以徽章展示在线账号（不再需要切换账号）。
 
 账号与会话绑定持久化在 `data/gitea-studio/state.json`（权限 0600，schema v2，自动从 v1 单账号迁移）。
 
 ## AI 工具
 
-插件注册 `git` 工具（34 个动作），与 UI 共享同一操作层：
+插件注册 `git` 工具（35 个动作），与 UI 共享同一操作层：
 
 - 账号：`status` `accounts` `use_account` `account`
-- 仓库：`all_repos`（聚合所有账号）`repos` `create_repo` `update_repo` `delete_repo`
+- 仓库：`all_repos`（聚合所有账号）`repos` `create_repo` `update_repo` `delete_repo` `import_repo`（按 URL 导入，可 `bind`）
 - 分支 / 提交：`branches` `create_branch` `delete_branch` `graph` `commits` `compare` `commit_diff` `contributions`
 - 文件：`files` `file`
 - 本地同步：`clone` `push`（自动同步到全部目标，`sync:false` 可关闭）`pull`
@@ -87,6 +88,13 @@ NODE_ENV=test node /tmp/gs-react-test/render.mjs   # 客户端渲染测试
 - 删除仓库 / 删除分支 / 删除账号等破坏性操作在 UI 中均需二次确认。
 - 公开仓库不包含任何凭据。
 
+
+## 更新日志
+
+### v2.1.1
+- 新增仓库地址导入：粘贴 Git URL 即可导入，自动匹配平台账号并解析 owner/repo（含 GitLab 子组）；新增 AI 工具动作 `import_repo`（可 `bind` 关联会话），工作台顶部新增「导入地址」入口。
+- 工作台顶部重构：移除冗余的默认账号切换下拉，改为所有在线账号的状态徽章（平台色点 + 账号名），并加入品牌标题区。
+- 分支提交图视觉重塑：泳道曲线增加柔和光晕、跨泳道平滑 S 曲线、合并提交双环、悬停高亮与分支徽章收纳，暗色主题下更清晰。
 
 ## 声明
 本项目使用Deepdeek Harness生成
