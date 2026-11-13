@@ -1,6 +1,6 @@
 {
   "name": "@local/gitea-studio",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "private": true,
   "type": "module",
   "description": "Git 工作台 (Git Workbench): sign in to multiple Gitea / GitHub / GitLab / Gitee accounts at once — aggregated repo browsing, branch graphs, PR/MR review, contribution heatmaps, version compare, one-commit multi-platform sync push from chat, and repo-bound sessions for automatic Git iteration.",

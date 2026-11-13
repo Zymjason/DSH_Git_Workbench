@@ -15,6 +15,9 @@ window.__ModuleLoader__.load({
     const h = React.createElement
     const NS = 'giteaStudio'
     const RPC_URL = 'api/gitea-studio/rpc'
+    /* Right-sidebar tab identity: the kind opens the page, the id keys its body. */
+    const GIT_TAB_KIND = 'git-workbench'
+    const GIT_TAB_ID = '@local/gitea-studio'
 
     /* ------------------------------------------------------------ locales */
 
@@ -70,6 +73,8 @@ window.__ModuleLoader__.load({
       importBusy: '正在导入…', importOk: '仓库已导入', accountsOnline: '个账号同时在线',
       unlink: '解除关联', unlinkConfirm: '确认解除关联？', linkFailed: '仓库关联失败',
       branchesView: '分支', branchViewNoBinding: '当前会话未关联仓库。用输入框加号菜单或 @ 语法关联一个仓库，即可查看版本与改动对比。',
+      branchesGuideDesc: '查看并对比关联仓库的版本与改动',
+      openBranchesPanel: '在右侧栏打开分支面板',
       openStudio: '打开工作台', versionsTab: '版本', compareTab: '对比', backToCommits: '返回提交列表',
       noChanges: '没有文件改动', noCommits: '暂无提交', refPlaceholder: '分支 / 标签 / sha',
       compareSwap: '交换基准与目标', compareRun: '对比', compareSame: '基准与目标不能相同', compareEmpty: '选择两个引用（分支、标签或提交 sha）开始对比',
@@ -136,6 +141,8 @@ window.__ModuleLoader__.load({
       importBusy: 'Importing…', importOk: 'Repository imported', accountsOnline: 'accounts online',
       unlink: 'Unlink', unlinkConfirm: 'Unlink this repository?', linkFailed: 'Repository link failed',
       branchesView: 'Branches', branchViewNoBinding: 'This session is not linked to a repository. Link one via the + menu or an @ mention to browse versions and diffs.',
+      branchesGuideDesc: 'Browse and compare versions of the linked repository',
+      openBranchesPanel: 'Open the branches panel in the right sidebar',
       openStudio: 'Open studio', versionsTab: 'Versions', compareTab: 'Compare', backToCommits: 'Back to commits',
       noChanges: 'No file changes', noCommits: 'No commits yet', refPlaceholder: 'branch / tag / sha',
       compareSwap: 'Swap base and head', compareRun: 'Compare', compareSame: 'Base and head must differ', compareEmpty: 'Pick two refs (branches, tags, or commit shas) to compare',
@@ -266,6 +273,9 @@ window.__ModuleLoader__.load({
 .gs-acct-dot{width:7px;height:7px;border-radius:50%;flex:none;box-shadow:0 0 0 2px color-mix(in srgb,currentColor 12%,transparent)}
 .gs-acct-name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--dsw-alias-label-primary);font-weight:600}
 .gs-acct-platform{flex:none;opacity:.75}
+.gs-link-chip-repo{padding:2px 6px 2px 8px;gap:6px;max-width:360px}
+.gs-link-chip-dot{width:7px;height:7px;border-radius:50%;flex:none;display:inline-block;box-shadow:0 0 0 2px color-mix(in srgb,currentColor 10%,transparent)}
+.gs-link-chip-branch{flex:none;font-size:11px;color:var(--dsw-alias-label-secondary);background:var(--dsw-alias-bg-layer-2);border-radius:6px;padding:0 5px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .gs-import{margin-bottom:14px}
 .gs-import-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .gs-import-row .gs-input{flex:1 1 320px;min-width:220px}
@@ -1413,6 +1423,26 @@ window.__ModuleLoader__.load({
     }
 
     /* Composer-row indicator: the repo linked to this session, with unlink. */
+    /** Open (or reveal) the Git branches tab in the right sidebar; fall back to the studio panel. */
+    function openBranchesPanel() {
+      try {
+        const sidebarRight = clientCtx && clientCtx.sidebarRight
+        if (sidebarRight && typeof sidebarRight.openTab === 'function') {
+          sidebarRight.openTab(GIT_TAB_KIND)
+          return true
+        }
+      } catch {
+        /* no right sidebar in this deployment: fall through to the studio */
+      }
+      try {
+        const layout = clientCtx && clientCtx.get('layout')
+        if (layout && layout.selectPanel) layout.selectPanel('gitea-studio')
+      } catch {
+        /* nothing to open */
+      }
+      return false
+    }
+
     function RepoLinkChip({ sessionId }) {
       const links = useLinkStore()
       const current = useStore()
@@ -1434,20 +1464,28 @@ window.__ModuleLoader__.load({
         return error ? h('span', { className: 'gs-link-chip gs-link-chip-error', title: error }, t('linkFailed')) : null
       }
       const fullName = binding.owner + '/' + binding.repo
-      const openStudio = () => {
-        const layout = clientCtx && clientCtx.get('layout')
-        if (layout && layout.selectPanel) layout.selectPanel('gitea-studio')
-      }
+      const targets = binding.targets || []
+      const tip = (binding.path || fullName) + (binding.branch ? ' · ' + binding.branch : '') + ' · ' + t('openBranchesPanel')
       return h('span', {
-        className: 'gs-link-chip',
-        title: (binding.path || fullName) + (binding.branch ? ' · ' + binding.branch : ''),
+        className: 'gs-link-chip gs-link-chip-repo',
+        title: tip,
       },
-        h('button', { type: 'button', className: 'gs-link-chip-main', onClick: openStudio }, '⎇ ' + fullName),
-        (binding.targets || []).length > 0
+        h('button', {
+          type: 'button',
+          className: 'gs-link-chip-main',
+          title: t('openBranchesPanel'),
+          onClick: () => openBranchesPanel(),
+        },
+          h('i', { className: 'gs-link-chip-dot', style: { background: platformColor(binding.platform || '') } }),
+          '⎇ ' + fullName),
+        binding.branch
+          ? h('span', { className: 'gs-link-chip-branch', title: t('branchLabel') + ': ' + binding.branch }, binding.branch)
+          : null,
+        targets.length > 0
           ? h('span', {
               className: 'gs-link-chip-sync',
-              title: t('syncTitle') + ': ' + binding.targets.map((x) => x.owner + '/' + x.repo).join('、'),
-            }, '⇄' + binding.targets.length)
+              title: t('syncTitle') + ': ' + targets.map((x) => x.owner + '/' + x.repo).join('、'),
+            }, '⇄' + targets.length)
           : null,
         h('button', {
           type: 'button',
@@ -1565,17 +1603,17 @@ window.__ModuleLoader__.load({
           : null,
         showAdd
           ? h('div', { style: { display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center', marginTop: 8 } },
-              h('select', { className: 'gs-select', style: { width: 190 }, value: accountId, onChange: (e) => setAccountId(e.target.value) },
+              h('select', { className: 'gs-select', style: { flex: '1 1 130px', minWidth: 110 }, value: accountId, onChange: (e) => setAccountId(e.target.value) },
                 h('option', { value: '' }, t('targetAccount')),
                 accounts.map((a) => h('option', { key: a.id, value: a.id }, platformLabel(a.platform) + ' · ' + (a.username || a.baseUrl)))),
-              h('input', { className: 'gs-input', style: { width: 130 }, value: owner, placeholder: 'owner', onChange: (e) => setOwner(e.target.value) }),
-              h('input', { className: 'gs-input', style: { width: 150 }, value: repo, placeholder: 'repo', onChange: (e) => setRepo(e.target.value) }),
+              h('input', { className: 'gs-input', style: { flex: '1 1 90px', minWidth: 70 }, value: owner, placeholder: 'owner', onChange: (e) => setOwner(e.target.value) }),
+              h('input', { className: 'gs-input', style: { flex: '1 1 100px', minWidth: 70 }, value: repo, placeholder: 'repo', onChange: (e) => setRepo(e.target.value) }),
               h(Btn, { primary: true, busy, disabled: !accountId || !owner.trim() || !repo.trim(), onClick: add }, t('add')),
               h(Btn, { onClick: () => setShowAdd(false) }, t('cancel')))
           : null,
         h(ErrorBanner, { error }),
         h('div', { style: { display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' } },
-          h('input', { className: 'gs-input', style: { flex: 1, minWidth: 200 }, value: message, placeholder: t('syncMessagePh'), onChange: (e) => setMessage(e.target.value) }),
+          h('input', { className: 'gs-input', style: { flex: '1 1 140px', minWidth: 120 }, value: message, placeholder: t('syncMessagePh'), onChange: (e) => setMessage(e.target.value) }),
           h(Btn, { primary: true, busy: pushBusy, disabled: message.trim() === '', onClick: push },
             targets.length > 0 ? t('syncPush') : t('pushNow'))),
         pushResult
@@ -1592,7 +1630,7 @@ window.__ModuleLoader__.load({
           : null)
     }
 
-    /* The "分支" view in the conversation view ring: versions and diffs of the linked repo. */
+    /* The right-sidebar "分支" tab: versions and diffs of the linked repo, always at hand. */
     function BranchView({ sessionId }) {
       const links = useLinkStore()
       const current = useStore()
@@ -1688,19 +1726,27 @@ window.__ModuleLoader__.load({
 
       const refListId = 'gs-refs-' + sessionId
       const refOptions = (branches || []).map((b) => h('option', { key: b.name, value: b.name }))
+      const refreshAll = () => {
+        setSelected(null)
+        setResult(null)
+        setTick((n) => n + 1)
+        void refreshBindings().catch(() => {})
+      }
       const toolbar = h('div', { style: { ...S.toolbar, flexWrap: 'wrap' } },
-        h('span', { className: 'gs-mono', style: { fontWeight: 650, fontSize: 13 } }, '⎇ ' + fullName),
+        h('i', { className: 'gs-link-chip-dot', style: { background: platformColor(binding.platform || '') } }),
+        h('span', { className: 'gs-mono', style: { fontWeight: 650, fontSize: 13, ...S.ellipsis } }, '⎇ ' + fullName),
         mode === 'commits'
-          ? h('select', { className: 'gs-select', style: { width: 160 }, value: branch, onChange: (e) => setBranch(e.target.value) },
+          ? h('select', { className: 'gs-select', style: { flex: '1 1 130px', minWidth: 110, maxWidth: 200 }, value: branch, onChange: (e) => setBranch(e.target.value) },
               (branches || []).map((b) => h('option', { key: b.name, value: b.name }, b.name + (b.default ? ' ★' : ''))))
           : null,
-        h('div', { style: S.spacer }),
         h(Tabs, {
           tabs: [{ id: 'commits', label: t('versionsTab') }, { id: 'compare', label: t('compareTab') }],
           active: mode,
           onSelect: (id) => { setMode(id); setError('') },
         }),
-        h(Btn, { onClick: () => { setSelected(null); setResult(null); setTick((n) => n + 1); void refreshBindings().catch(() => {}) }, title: t('refresh') }, '↻'))
+        h('span', { style: { marginLeft: 'auto', display: 'inline-flex', gap: 6 } },
+          h(Btn, { onClick: openStudio, title: t('openStudio') }, '⧉'),
+          h(Btn, { onClick: refreshAll, title: t('refresh') }, '↻')))
 
       let body
       if (mode === 'commits') {
@@ -1728,9 +1774,9 @@ window.__ModuleLoader__.load({
       } else {
         body = h('div', null,
           h('div', { className: 'gs-card', style: { padding: 12, marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' } },
-            h('input', { className: 'gs-input', style: { width: 170 }, list: refListId, value: base, placeholder: t('refPlaceholder'), onChange: (e) => setBase(e.target.value) }),
+            h('input', { className: 'gs-input', style: { flex: '1 1 110px', minWidth: 90 }, list: refListId, value: base, placeholder: t('refPlaceholder'), onChange: (e) => setBase(e.target.value) }),
             h(Btn, { onClick: () => { setBase(head); setHead(base) }, title: t('compareSwap') }, '⇄'),
-            h('input', { className: 'gs-input', style: { width: 170 }, list: refListId, value: head, placeholder: t('refPlaceholder'), onChange: (e) => setHead(e.target.value) }),
+            h('input', { className: 'gs-input', style: { flex: '1 1 110px', minWidth: 90 }, list: refListId, value: head, placeholder: t('refPlaceholder'), onChange: (e) => setHead(e.target.value) }),
             h('datalist', { id: refListId }, refOptions),
             h(Btn, { primary: true, busy, disabled: !base || !head || base === head, onClick: runCompare }, t('compareRun')),
             base && head && base === head ? h('span', { className: 'gs-muted', style: { fontSize: 12 } }, t('compareSame')) : null),
@@ -1749,13 +1795,35 @@ window.__ModuleLoader__.load({
                   : result.files.map((file) => h(DiffFile, { key: file.filename, file }))))
       }
 
-      return h('div', { style: { height: '100%', overflowY: 'auto', padding: 16 } },
+      return h('div', { style: { height: '100%', minWidth: 0, overflowY: 'auto', padding: 12 } },
         h(StyleTag),
         toolbar,
         h(ErrorBanner, { error, onRetry: () => setError('') }),
         h(SyncPanel, { sessionId, binding }),
         busy && !selected && mode === 'commits' ? h('div', { style: { padding: 12, textAlign: 'center' } }, h(Spinner)) : null,
         body)
+    }
+
+    /* Right-sidebar tab type: the linked repo's versions and diffs, always at hand. */
+    function gitTabDefinition(translate) {
+      return {
+        id: GIT_TAB_ID,
+        kind: GIT_TAB_KIND,
+        priority: 'extension',
+        title: () => translate('branchesView'),
+        guide: [{
+          id: 'git-workbench',
+          order: 30,
+          title: () => translate('branchesView'),
+          description: () => translate('branchesGuideDesc'),
+          icon: GitGlyph,
+        }],
+      }
+    }
+
+    /** Right-sidebar tab body: the branches view inside the docked column. */
+    function GitTabBody({ sessionId }) {
+      return h(BranchView, { sessionId })
     }
 
     /* ------------------------------------------- contributions heatmap */
@@ -2034,7 +2102,7 @@ window.__ModuleLoader__.load({
 
     /* ------------------------------------------------------------- plugin */
 
-    const inject = ['slots', 'locale']
+    const inject = ['slots', 'locale', 'sidebarRight', 'sidebarRightTabs']
 
     function apply(ctx) {
       clientCtx = ctx
@@ -2047,6 +2115,9 @@ window.__ModuleLoader__.load({
           if (state.configured) void getRepos().catch(() => {})
         })
         .catch(() => {})
+      /* Right-sidebar tab type: registered alongside the browser shell's own types,
+         so the linked repo's versions stay one click away from the conversation. */
+      ctx.effect(() => ctx.sidebarRightTabs.register(gitTabDefinition(t)), 'gitea-studio: git tab type')
       const slots = ctx.slots
       if (!slots) return
       ctx.effect(
@@ -2071,18 +2142,15 @@ window.__ModuleLoader__.load({
         'gitea-studio: studio page',
       )
       ctx.effect(
-        () => slots.inject('conversation.view', () => slots.register(
+        () => slots.inject('sidebar.right.pane.tab', () => slots.register(
           {
-            name: 'conversation.view',
-            id: 'gitea-branches',
-            order: 20,
+            name: 'sidebar.right.pane.tab',
+            key: GIT_TAB_ID,
             locale: NS,
-            label: () => t('branchesView'),
-            inject: (sessionId) => ({ sessionId }),
           },
-          BranchView,
+          GitTabBody,
         )),
-        'gitea-studio: branches view',
+        'gitea-studio: git tab body',
       )
       ctx.effect(
         () => slots.inject('conversation.input.left', () => slots.register(
